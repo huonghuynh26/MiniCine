@@ -18,9 +18,11 @@ if ($action === 'delete') {
 }
 
 if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $movieId   = (int)$_POST['movie_id'];
-    $roomId    = (int)$_POST['room_id'];
-    $startTime = $_POST['start_time'] ?? '';
+    $movieId       = (int)$_POST['movie_id'];
+    $roomId        = (int)$_POST['room_id'];
+    $startDate     = trim($_POST['start_date']      ?? '');
+    $startTimeOnly = trim($_POST['start_time_only'] ?? '');
+    $startTime     = ($startDate && $startTimeOnly) ? $startDate . ' ' . $startTimeOnly . ':00' : '';
 
     if (!$movieId || !$roomId || !$startTime) {
         $err = 'Vui lòng điền đầy đủ thông tin.';
@@ -29,14 +31,14 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $dur = (int)$db->query("SELECT duration_min FROM tblMovies WHERE id=$movieId")->fetch_assoc()['duration_min'];
         $endTime = date('Y-m-d H:i:s', strtotime($startTime) + $dur * 60);
 
-        // Check conflict: same room, overlapping time
+        // Check conflict: same room, overlapping time (new show's time overlaps existing)
         $check = $db->prepare("
             SELECT id FROM tblShows
             WHERE room_id=? AND id != ?
-              AND NOT (end_time <= ? OR start_time >= ?)
+              AND start_time < ? AND end_time > ?
         ");
         $editId = (int)($_POST['id'] ?? 0);
-        $check->bind_param('iiss', $roomId, $editId, $startTime, $endTime);
+        $check->bind_param('iiss', $roomId, $editId, $endTime, $startTime);
         $check->execute();
         if ($check->get_result()->num_rows > 0) {
             $err = 'Phòng chiếu đã có suất khác trong khung giờ này.';
@@ -133,8 +135,14 @@ renderHead('Quản lý suất chiếu');
           </div>
           <div class="form-group">
             <label>Thời gian bắt đầu *</label>
-            <input class="form-control" type="datetime-local" name="start_time" required
-                   value="<?= $editing ? date('Y-m-d\TH:i', strtotime($editing['start_time'])) : '' ?>">
+            <div style="display:flex;gap:8px">
+              <input class="form-control" type="date" name="start_date" required
+                     style="flex:1;color-scheme:dark"
+                     value="<?= $editing ? date('Y-m-d', strtotime($editing['start_time'])) : date('Y-m-d') ?>">
+              <input class="form-control" type="time" name="start_time_only" required
+                     style="width:110px;color-scheme:dark"
+                     value="<?= $editing ? date('H:i', strtotime($editing['start_time'])) : '10:00' ?>">
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:12px">
@@ -148,16 +156,23 @@ renderHead('Quản lý suất chiếu');
   <!-- Table -->
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Phim</th><th>Phòng</th><th>Thời gian</th><th>Tỷ lệ lấp đầy</th><th>Thao tác</th></tr></thead>
+      <thead><tr><th>Phim</th><th>Phòng</th><th>Bắt đầu</th><th>Kết thúc</th><th>Tỷ lệ lấp đầy</th><th>Thao tác</th></tr></thead>
       <tbody>
         <?php foreach ($shows as $s):
-          $pct = $s['total_seats'] ? round($s['booked_seats'] / $s['total_seats'] * 100) : 0;
-          $isPast = strtotime($s['start_time']) < time();
+          $pct    = $s['total_seats'] ? round($s['booked_seats'] / $s['total_seats'] * 100) : 0;
+          $isPast = strtotime($s['end_time']) < time();
+          $isNow  = strtotime($s['start_time']) <= time() && strtotime($s['end_time']) >= time();
         ?>
-        <tr style="<?= $isPast ? 'opacity:.5' : '' ?>">
-          <td style="font-weight:600"><?= htmlspecialchars($s['movie_title']) ?></td>
+        <tr style="<?= $isPast ? 'opacity:.4' : '' ?>">
+          <td style="font-weight:600">
+            <?= htmlspecialchars($s['movie_title']) ?>
+            <?php if ($isNow): ?>
+              <span class="badge" style="background:#1a3a1a;color:#4caf50;margin-left:4px">● Đang chiếu</span>
+            <?php endif; ?>
+          </td>
           <td class="text-muted"><?= htmlspecialchars($s['room_name']) ?></td>
           <td><?= date('H:i d/m/Y', strtotime($s['start_time'])) ?></td>
+          <td class="text-muted"><?= date('H:i', strtotime($s['end_time'])) ?></td>
           <td>
             <div style="display:flex;align-items:center;gap:8px">
               <div style="background:#1a1a1a;border-radius:4px;height:6px;width:80px">

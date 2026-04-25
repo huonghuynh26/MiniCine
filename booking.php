@@ -17,7 +17,7 @@ $stmt = $db->prepare("
     FROM tblShows s
     JOIN tblMovies m ON m.id = s.movie_id
     JOIN tblRooms  r ON r.id = s.room_id
-    WHERE s.id=? AND s.start_time > DATE_SUB(NOW(), INTERVAL 3 HOUR)
+    WHERE s.id=? AND s.end_time > NOW()
 ");
 $stmt->bind_param('i', $showId);
 $stmt->execute();
@@ -65,16 +65,14 @@ renderHead('Đặt vé - ' . $show['movie_title']);
     </div>
   </div>
 
-  <!-- Flash sale -->
-  <?php if ($flash): ?>
-  <div class="flash-sale-banner mb-3">
+  <!-- Flash sale banner (dynamic - updated by JS polling) -->
+  <div id="flash-banner" class="flash-sale-banner mb-3" style="display:<?= $flash ? 'flex' : 'none' ?>">
     <div class="flash-icon">⚡</div>
     <div>
-      <h3>Flash Sale đang áp dụng – Giảm <?= $flash['discount_pct'] ?>%!</h3>
+      <h3>Flash Sale đang áp dụng – Giảm <span id="flash-pct"><?= $flash ? $flash['discount_pct'] : 0 ?>%</span>!</h3>
       <p>Áp dụng cho ghế Standard và VIP. Ghế Couple không áp dụng.</p>
     </div>
   </div>
-  <?php endif; ?>
 
   <div style="display:grid;grid-template-columns:1fr 320px;gap:32px" id="booking-layout">
 
@@ -190,20 +188,25 @@ function renderSeats(seats) {
     if (!byRow[row]) continue;
     html += `<div class="seat-row"><div class="seat-row-label">${row}</div>`;
     byRow[row].forEach(s => {
-      let cls  = 'seat';
-      let label= `${s.row}${s.number}`;
-      const isMine = selected[s.id];
+      let cls   = 'seat';
+      let label = s.type === 'couple'
+        ? `${s.row}${s.number * 2 - 1}-${s.row}${s.number * 2}`
+        : `${s.row}${s.number}`;
 
-      if (s.type === 'couple') {
-        cls += ' couple';
-        label = `${s.row}${s.number * 2 - 1}-${s.row}${s.number * 2}`;
-      }
+      if (s.type === 'couple') cls += ' couple';
 
-      if (isMine) {
+      const isMine       = !!selected[s.id];
+      const isBooked     = s.status === 'booked';
+      const isHeldByOther= s.status === 'held' && parseInt(s.held_by) !== MY_ID;
+      const isHeldByMe   = s.status === 'held' && parseInt(s.held_by) === MY_ID;
+
+      if (isMine || isHeldByMe) {
+        // Ghế mình đang chọn hoặc đang giữ → đỏ
         cls += ' selected';
-      } else if (s.status === 'booked') {
+      } else if (isBooked) {
         cls += ' booked';
-      } else if (s.status === 'held' && s.held_by != MY_ID) {
+      } else if (isHeldByOther) {
+        // Ghế người khác đang giữ → màu cam, không click được
         cls += ' held';
       } else if (s.type === 'vip') {
         cls += ' available vip-seat';
@@ -213,8 +216,12 @@ function renderSeats(seats) {
         cls += ' available';
       }
 
-      const clickable = !isMine && s.status !== 'booked' && !(s.status === 'held' && s.held_by != MY_ID);
-      const click = clickable ? `onclick="toggleSeat(${JSON.stringify(s).replace(/"/g,"'")})"` : '';
+      const canClick = !isBooked && !isHeldByOther && !isMine && !isHeldByMe;
+      // Cho phép bỏ chọn ghế mình đã chọn (isMine)
+      const canToggle = canClick || isMine;
+      const click = canToggle
+        ? `onclick="toggleSeat(${JSON.stringify(s).replace(/"/g,"'")})"` : '';
+
       html += `<div class="${cls}" ${click} title="${label}">${label}</div>`;
     });
     html += '</div>';
@@ -370,9 +377,70 @@ function closePayment() {
   document.getElementById('payment-modal').style.display = 'none';
 }
 
-// ─── Polling every 10s ────────────────────────────────────────────
+// ─── Poll flash sale status ───────────────────────────────────────
+let currentFlashDisc = FLASH_DISC;
+
+async function checkFlashSale() {
+  try {
+    const res  = await fetch(`${BASE_URL}/api/flash_status.php?show_id=${SHOW_ID}&_=${Date.now()}`);
+    const data = await res.json();
+    const banner = document.getElementById('flash-banner');
+    if (data.active) {
+      banner.style.display = 'flex';
+      document.getElementById('flash-pct').textContent = data.discount_pct + '%';
+      if (currentFlashDisc !== data.discount_pct) {
+        currentFlashDisc = data.discount_pct;
+        updateSummary(); // recalc prices
+      }
+    } else {
+      banner.style.display = 'none';
+      if (currentFlashDisc !== 0) {
+        currentFlashDisc = 0;
+        updateSummary();
+      }
+    }
+  } catch(e) {}
+}
+
+// Override updateSummary to use dynamic flash disc
+const _origUpdate = updateSummary;
+function updateSummary() {
+  const items = Object.values(selected);
+  if (!items.length) {
+    document.getElementById('selected-list').innerHTML = '<p class="text-muted" style="font-size:13px">Chưa chọn ghế nào</p>';
+    document.getElementById('total-price').textContent = '0đ';
+    document.getElementById('pay-btn').disabled = true;
+    return;
+  }
+  let total = 0;
+  let html  = '';
+  items.forEach(s => {
+    const base  = PRICES[s.type] || 0;
+    const disc  = (currentFlashDisc > 0 && s.type !== 'couple') ? currentFlashDisc : 0;
+    const price = Math.round(base * (1 - disc / 100));
+    total += price;
+    const label = s.type === 'couple'
+      ? `${s.row}${s.number*2-1}-${s.row}${s.number*2}`
+      : `${s.row}${s.number}`;
+    html += `<div class="price-row">
+      <span class="label">${label} <em style="font-size:11px;color:#555">(${s.type})</em></span>
+      <span>
+        ${disc ? `<span class="price-original">${base.toLocaleString()}đ</span> ` : ''}
+        ${price.toLocaleString()}đ
+        ${disc ? `<span class="price-discount">-${disc}%</span>` : ''}
+      </span>
+    </div>`;
+  });
+  document.getElementById('selected-list').innerHTML = html;
+  document.getElementById('total-price').textContent = total.toLocaleString() + 'đ';
+  document.getElementById('pay-btn').disabled = false;
+}
+
+// ─── Start polling ────────────────────────────────────────────────
 loadSeats();
-pollInterval = setInterval(loadSeats, 10000);
+checkFlashSale();
+pollInterval = setInterval(loadSeats,      10000);
+setInterval(checkFlashSale, 15000);
 </script>
 
 <?php renderFooter(); ?>

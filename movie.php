@@ -19,7 +19,7 @@ $stmt = $db->prepare("
     SELECT s.*, r.name as room_name, r.floor
     FROM tblShows s
     JOIN tblRooms r ON r.id = s.room_id
-    WHERE s.movie_id=? AND s.start_time > NOW()
+    WHERE s.movie_id=? AND s.end_time > NOW()
     ORDER BY s.start_time ASC
 ");
 $stmt->bind_param('i', $id);

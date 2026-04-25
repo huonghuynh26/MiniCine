@@ -15,7 +15,7 @@ function getSeatPrice(string $type): int {
 function getFlashSale(int $showId): ?array {
     $db = db();
     $stmt = $db->prepare("
-        SELECT fs.*, s.start_time
+        SELECT fs.*, s.start_time, s.end_time
         FROM tblFlashSales fs
         JOIN tblShows s ON s.id = fs.show_id
         WHERE fs.show_id = ? AND fs.is_active = 1
@@ -27,24 +27,32 @@ function getFlashSale(int $showId): ?array {
 
     $now       = time();
     $startTime = strtotime($sale['start_time']);
+    $endTime   = strtotime($sale['end_time']);
     $pre2h     = $startTime - 2 * 3600;
     $post15m   = $startTime + 15 * 60;
 
-    // Admin-configured manual flash sale
+    // Manual: luôn active nếu is_active=1 và show chưa kết thúc
     if ($sale['trigger_type'] === 'manual') {
-        return ['discount_pct' => $sale['discount_pct'], 'reason' => 'Flash Sale'];
+        if ($now <= $endTime) {
+            return ['discount_pct' => $sale['discount_pct'], 'reason' => 'Flash Sale'];
+        }
+        return null;
     }
-    // Auto: 2h before show, ≥30% seats empty
+
+    // pre2h: active từ 2h trước đến lúc chiếu bắt đầu
     if ($sale['trigger_type'] === 'pre2h' && $now >= $pre2h && $now < $startTime) {
         $pct = getAvailableSeatPct($showId);
         if ($pct >= 30) {
-            return ['discount_pct' => 30, 'reason' => 'Flash Sale -30%'];
+            return ['discount_pct' => $sale['discount_pct'] ?: 30, 'reason' => 'Flash Sale -' . ($sale['discount_pct'] ?: 30) . '%'];
         }
+        return null;
     }
-    // Auto: 15min after show started → 50% off
-    if ($sale['trigger_type'] === 'post15m' && $now >= $post15m) {
-        return ['discount_pct' => 50, 'reason' => 'Flash Sale -50%'];
+
+    // post15m: active từ 15 phút sau khi chiếu đến khi kết thúc
+    if ($sale['trigger_type'] === 'post15m' && $now >= $post15m && $now <= $endTime) {
+        return ['discount_pct' => $sale['discount_pct'] ?: 50, 'reason' => 'Flash Sale -' . ($sale['discount_pct'] ?: 50) . '%'];
     }
+
     return null;
 }
 

@@ -22,7 +22,7 @@ $flashShows = $db->query("
     JOIN tblShows s  ON s.id = fs.show_id
     JOIN tblMovies m ON m.id = s.movie_id
     JOIN tblRooms r  ON r.id = s.room_id
-    WHERE fs.is_active=1 AND s.start_time > NOW()
+    WHERE fs.is_active=1 AND s.end_time > NOW()
     ORDER BY s.start_time ASC LIMIT 3
 ")->fetch_all(MYSQLI_ASSOC);
 
