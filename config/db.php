@@ -9,6 +9,11 @@ function db(): mysqli {
         if ($conn->connect_error) {
             die(json_encode(['error' => 'DB connection failed: ' . $conn->connect_error]));
         }
+        // Sync MySQL timezone với PHP để tránh lệch giờ khi so sánh held_until
+        $offset = (new DateTimeZone(date_default_timezone_get()))->getOffset(new DateTime()) / 3600;
+        $sign   = $offset >= 0 ? '+' : '-';
+        $tz     = sprintf('%s%02d:00', $sign, abs($offset));
+        $conn->query("SET time_zone = '{$tz}'");
     }
     return $conn;
 }

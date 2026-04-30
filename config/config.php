@@ -1,4 +1,7 @@
 <?php
+// ─── Timezone ────────────────────────────────────────────────────────────────
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+
 // ─── Database ────────────────────────────────────────────────────────────────
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
@@ -22,9 +25,9 @@ if (!defined('APP_URL')) {
 // ─── Gmail SMTP (PHPMailer) ───────────────────────────────────────────────────
 define('MAIL_HOST',     'smtp.gmail.com');
 define('MAIL_PORT',     587);
-define('MAIL_USERNAME', 'huonghuynhuwu@gmail.com');   // Điền Gmail
-define('MAIL_PASSWORD', 'euzmmzigjmjtdylj');       // App Password 
-define('MAIL_FROM',     'huonghuynhuwu@gmail.com');
+define('MAIL_USERNAME', 'your_gmail@gmail.com');   // ← Điền Gmail của bạn
+define('MAIL_PASSWORD', 'your_app_password');       // ← App Password (không phải mật khẩu Gmail)
+define('MAIL_FROM',     'your_gmail@gmail.com');
 define('MAIL_FROM_NAME', 'MiniCine');
 
 // ─── Session & Security ───────────────────────────────────────────────────────

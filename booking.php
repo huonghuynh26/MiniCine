@@ -183,6 +183,25 @@ function renderSeats(seats) {
   const byRow = {};
   seats.forEach(s => { (byRow[s.row] = byRow[s.row] || []).push(s); });
 
+  // ── Auto-evict ghế bị người khác hold/book trong lúc polling ──
+  let evicted = [];
+  seats.forEach(s => {
+    if (!selected[s.id]) return;
+    const takenByOther = (s.status === 'held' && parseInt(s.held_by) !== MY_ID)
+                      || s.status === 'booked';
+    if (takenByOther) {
+      evicted.push(`${s.row}${s.number}`);
+      delete selected[s.id];
+    }
+  });
+  if (evicted.length) {
+    const msg = document.getElementById('suggest-msg');
+    msg.innerHTML = `<div class="alert alert-warning">
+      ⚠️ Ghế <strong>${evicted.join(', ')}</strong> vừa bị người khác đặt và đã bị xoá khỏi danh sách của bạn.
+    </div>`;
+    setTimeout(() => { msg.innerHTML = ''; }, 5000);
+  }
+
   let html = '';
   for (const row of ['A','B','C','D','E','F','G']) {
     if (!byRow[row]) continue;
@@ -195,19 +214,16 @@ function renderSeats(seats) {
 
       if (s.type === 'couple') cls += ' couple';
 
-      const isMine       = !!selected[s.id];
-      const isBooked     = s.status === 'booked';
-      const isHeldByOther= s.status === 'held' && parseInt(s.held_by) !== MY_ID;
-      const isHeldByMe   = s.status === 'held' && parseInt(s.held_by) === MY_ID;
+      const isMine        = !!selected[s.id];
+      const isBooked      = s.status === 'booked';
+      const isHeldByOther = s.status === 'held' && parseInt(s.held_by) !== MY_ID;
+      const isHeldByMe    = s.status === 'held' && parseInt(s.held_by) === MY_ID;
 
-      if (isMine || isHeldByMe) {
-        // Ghế mình đang chọn hoặc đang giữ → đỏ
+      if (isHeldByOther || isBooked) {
+        // LUÔN ưu tiên: ghế bị chiếm → cam hoặc xám, không click được
+        cls += isBooked ? ' booked' : ' held';
+      } else if (isMine || isHeldByMe) {
         cls += ' selected';
-      } else if (isBooked) {
-        cls += ' booked';
-      } else if (isHeldByOther) {
-        // Ghế người khác đang giữ → màu cam, không click được
-        cls += ' held';
       } else if (s.type === 'vip') {
         cls += ' available vip-seat';
       } else if (s.type === 'couple') {
@@ -216,10 +232,8 @@ function renderSeats(seats) {
         cls += ' available';
       }
 
-      const canClick = !isBooked && !isHeldByOther && !isMine && !isHeldByMe;
-      // Cho phép bỏ chọn ghế mình đã chọn (isMine)
-      const canToggle = canClick || isMine;
-      const click = canToggle
+      const canClick = !isBooked && !isHeldByOther;
+      const click = canClick
         ? `onclick="toggleSeat(${JSON.stringify(s).replace(/"/g,"'")})"` : '';
 
       html += `<div class="${cls}" ${click} title="${label}">${label}</div>`;
@@ -230,18 +244,88 @@ function renderSeats(seats) {
   updateSummary();
 }
 
-// ─── Toggle seat ──────────────────────────────────────────────────
-function toggleSeat(s) {
-  if (selected[s.id]) {
-    delete selected[s.id];
-  } else {
-    selected[s.id] = s;
+// ─── Toggle seat: click = hold ngay, click lại = release ngay ────
+async function toggleSeat(s) {
+  const seatId = s.id;
+
+  if (selected[seatId]) {
+    // Bỏ chọn → release ngay
+    delete selected[seatId];
+    renderOptimistic(); // cập nhật UI ngay không đợi server
+    try {
+      await fetch(`${BASE_URL}/api/release.php`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ show_id: SHOW_ID, seat_ids: [seatId] })
+      });
+    } catch(e) {}
+    await loadSeats();
+    return;
   }
-  loadSeats();
+
+  // Chọn → hold ngay
+  selected[seatId] = s;
+  renderOptimistic(); // hiện đỏ ngay trước khi API trả về
+
+  const res  = await fetch(`${BASE_URL}/api/hold.php`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ show_id: SHOW_ID, seat_ids: [seatId] })
+  });
+  const data = await res.json();
+
+  if (!data.ok) {
+    // Hold thất bại → bỏ khỏi selected, báo
+    delete selected[seatId];
+    const msg = document.getElementById('suggest-msg');
+    msg.innerHTML = `<div class="alert alert-warning">⚠️ Ghế ${s.row}${s.number} vừa bị người khác chọn.</div>`;
+    setTimeout(() => { msg.innerHTML = ''; }, 3000);
+  } else {
+    // Hold thành công → reset countdown 5 phút
+    startCountdown();
+  }
+  await loadSeats();
+}
+
+// Render UI ngay lập tức (optimistic) không đợi server
+function renderOptimistic() {
+  // Chỉ update màu ghế đang selected mà không fetch server
+  document.querySelectorAll('.seat').forEach(el => {
+    const title = el.getAttribute('title');
+    if (!title) return;
+    // tìm seat trong selected theo label
+    const isSelected = Object.values(selected).some(s => {
+      const lbl = s.type === 'couple'
+        ? `${s.row}${s.number * 2 - 1}-${s.row}${s.number * 2}`
+        : `${s.row}${s.number}`;
+      return lbl === title;
+    });
+    if (isSelected) {
+      el.className = el.className.replace(/\bavailable\b|\bvip-seat\b|\bcouple-seat\b|\bheld\b/g, '').trim();
+      if (!el.className.includes('selected')) el.className += ' selected';
+    }
+  });
   updateSummary();
 }
 
-function clearSelection() { selected = {}; loadSeats(); }
+async function clearSelection() {
+  const seatIds = Object.keys(selected).map(Number);
+  selected = {};
+  renderOptimistic();
+  if (seatIds.length) {
+    try {
+      await fetch(`${BASE_URL}/api/release.php`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ show_id: SHOW_ID, seat_ids: seatIds })
+      });
+    } catch(e) {}
+  }
+  await loadSeats();
+  // Ẩn countdown nếu đang hiện
+  document.getElementById('countdown-wrap').style.display = 'none';
+  clearInterval(holdTimer);
+}
 
 // ─── Summary ──────────────────────────────────────────────────────
 function updateSummary() {
@@ -257,7 +341,7 @@ function updateSummary() {
   let html  = '';
   items.forEach(s => {
     const base  = PRICES[s.type] || 0;
-    const disc  = (FLASH_DISC > 0 && s.type !== 'couple') ? FLASH_DISC : 0;
+    const disc  = (currentFlashDisc > 0 && s.type !== 'couple') ? currentFlashDisc : 0;
     const price = Math.round(base * (1 - disc / 100));
     total += price;
     const label = s.type === 'couple'
@@ -291,73 +375,102 @@ async function suggestSeats() {
   }
   if (data.fallback) {
     msg.innerHTML = `<div class="alert alert-warning">Không đủ ${data.requested} ghế liền kề, gợi ý ${data.seats.length} ghế.</div>`;
-  } else {
-    msg.innerHTML = '';
-  }
+  } else { msg.innerHTML = ''; }
+
+  // Release ghế cũ trước
+  const oldIds = Object.keys(selected).map(Number);
   selected = {};
-  data.seats.forEach(s => { selected[s.id] = s; });
-  loadSeats();
+  if (oldIds.length) {
+    try {
+      await fetch(`${BASE_URL}/api/release.php`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ show_id: SHOW_ID, seat_ids: oldIds })
+      });
+    } catch(e) {}
+  }
+
+  // Hold ghế mới
+  const newIds = data.seats.map(s => s.id);
+  const holdRes = await fetch(`${BASE_URL}/api/hold.php`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ show_id: SHOW_ID, seat_ids: newIds })
+  });
+  const holdData = await holdRes.json();
+  if (holdData.ok) {
+    data.seats.forEach(s => { selected[s.id] = s; });
+    startCountdown();
+  } else {
+    msg.innerHTML = `<div class="alert alert-error">Ghế gợi ý vừa bị người khác chọn. Thử lại nhé.</div>`;
+  }
+  await loadSeats();
 }
 
-// ─── Hold & Payment ───────────────────────────────────────────────
-async function proceedPayment() {
-  const seatIds = Object.keys(selected).map(Number);
-  if (!seatIds.length) return;
-
-  document.getElementById('pay-btn').disabled = true;
-  document.getElementById('pay-btn').textContent = '⏳ Đang giữ ghế...';
-
-  const res  = await fetch(`${BASE_URL}/api/hold.php`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ show_id: SHOW_ID, seat_ids: seatIds })
-  });
-  const data = await res.json();
-
-  if (!data.ok) {
-    document.getElementById('pay-btn').disabled = false;
-    document.getElementById('pay-btn').textContent = 'Tiếp tục thanh toán →';
-    alert('❌ ' + data.msg + '\nVui lòng chọn lại ghế.');
-    selected = {};
-    loadSeats();
-    return;
-  }
-
-  // Show countdown
+// ─── Countdown khi có ghế đang held ──────────────────────────────
+function startCountdown() {
   holdSeconds = 5 * 60;
   document.getElementById('countdown-wrap').style.display = 'block';
+  document.getElementById('countdown').classList.remove('urgent');
   if (holdTimer) clearInterval(holdTimer);
   holdTimer = setInterval(() => {
     holdSeconds--;
     const m = Math.floor(holdSeconds / 60);
     const s = holdSeconds % 60;
     document.getElementById('countdown-time').textContent = `${m}:${s.toString().padStart(2,'0')}`;
-    const el = document.getElementById('countdown');
-    if (holdSeconds <= 60) el.classList.add('urgent');
+    if (holdSeconds <= 60) document.getElementById('countdown').classList.add('urgent');
     if (holdSeconds <= 0) {
       clearInterval(holdTimer);
-      closePayment();
-      alert('⏱ Hết thời gian giữ ghế. Vui lòng chọn lại.');
+      document.getElementById('countdown-wrap').style.display = 'none';
       selected = {};
       loadSeats();
+      alert('⏱ Hết thời gian giữ ghế. Vui lòng chọn lại.');
     }
   }, 1000);
+}
 
-  // Open payment modal
+// ─── Payment ──────────────────────────────────────────────────────
+async function proceedPayment() {
+  const seatIds = Object.keys(selected).map(Number);
+  if (!seatIds.length) return;
+
+  document.getElementById('pay-btn').disabled = true;
+  document.getElementById('pay-btn').textContent = '⏳ Đang xử lý...';
+
+  // Kiểm tra ghế vẫn còn held bởi mình
+  const checkRes = await fetch(`${BASE_URL}/api/seats.php?show_id=${SHOW_ID}&_=${Date.now()}`);
+  const seats    = await checkRes.json();
+  const stillMine = seatIds.every(id => {
+    const s = seats.find(x => x.id == id);
+    return s && s.status === 'held' && parseInt(s.held_by) === MY_ID;
+  });
+
+  if (!stillMine) {
+    document.getElementById('pay-btn').disabled = false;
+    document.getElementById('pay-btn').textContent = 'Tiếp tục thanh toán →';
+    alert('⚠️ Một số ghế đã hết hạn giữ. Vui lòng chọn lại.');
+    selected = {};
+    loadSeats();
+    return;
+  }
+
   const total = Object.values(selected).reduce((sum, s) => {
-    const base  = PRICES[s.type] || 0;
-    const disc  = (FLASH_DISC > 0 && s.type !== 'couple') ? FLASH_DISC : 0;
+    const base = PRICES[s.type] || 0;
+    const disc = (currentFlashDisc > 0 && s.type !== 'couple') ? currentFlashDisc : 0;
     return sum + Math.round(base * (1 - disc / 100));
   }, 0);
   document.getElementById('pay-amount-display').textContent = total.toLocaleString() + 'đ';
   document.getElementById('pay-ref').textContent = 'MINICINE-' + Date.now();
-  const modal = document.getElementById('payment-modal');
-  modal.style.display = 'flex';
+  document.getElementById('payment-modal').style.display = 'flex';
   document.getElementById('pay-btn').textContent = 'Tiếp tục thanh toán →';
+  document.getElementById('pay-btn').disabled = false;
 }
 
 async function confirmPayment() {
   const seatIds = Object.keys(selected).map(Number);
+  const btn = document.querySelector('#payment-modal .btn-success');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang xác nhận...';
+
   const res = await fetch(`${BASE_URL}/api/confirm.php`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -365,8 +478,12 @@ async function confirmPayment() {
   });
   const data = await res.json();
   if (data.ok) {
+    clearInterval(pollInterval);
+    clearInterval(holdTimer);
     window.location.href = `${BASE_URL}/booking_success.php?booking_id=${data.booking_id}`;
   } else {
+    btn.disabled = false;
+    btn.textContent = '✓ Xác nhận đã thanh toán';
     alert('❌ ' + data.msg);
     closePayment();
     loadSeats();
@@ -390,56 +507,19 @@ async function checkFlashSale() {
       document.getElementById('flash-pct').textContent = data.discount_pct + '%';
       if (currentFlashDisc !== data.discount_pct) {
         currentFlashDisc = data.discount_pct;
-        updateSummary(); // recalc prices
+        updateSummary();
       }
     } else {
       banner.style.display = 'none';
-      if (currentFlashDisc !== 0) {
-        currentFlashDisc = 0;
-        updateSummary();
-      }
+      if (currentFlashDisc !== 0) { currentFlashDisc = 0; updateSummary(); }
     }
   } catch(e) {}
-}
-
-// Override updateSummary to use dynamic flash disc
-const _origUpdate = updateSummary;
-function updateSummary() {
-  const items = Object.values(selected);
-  if (!items.length) {
-    document.getElementById('selected-list').innerHTML = '<p class="text-muted" style="font-size:13px">Chưa chọn ghế nào</p>';
-    document.getElementById('total-price').textContent = '0đ';
-    document.getElementById('pay-btn').disabled = true;
-    return;
-  }
-  let total = 0;
-  let html  = '';
-  items.forEach(s => {
-    const base  = PRICES[s.type] || 0;
-    const disc  = (currentFlashDisc > 0 && s.type !== 'couple') ? currentFlashDisc : 0;
-    const price = Math.round(base * (1 - disc / 100));
-    total += price;
-    const label = s.type === 'couple'
-      ? `${s.row}${s.number*2-1}-${s.row}${s.number*2}`
-      : `${s.row}${s.number}`;
-    html += `<div class="price-row">
-      <span class="label">${label} <em style="font-size:11px;color:#555">(${s.type})</em></span>
-      <span>
-        ${disc ? `<span class="price-original">${base.toLocaleString()}đ</span> ` : ''}
-        ${price.toLocaleString()}đ
-        ${disc ? `<span class="price-discount">-${disc}%</span>` : ''}
-      </span>
-    </div>`;
-  });
-  document.getElementById('selected-list').innerHTML = html;
-  document.getElementById('total-price').textContent = total.toLocaleString() + 'đ';
-  document.getElementById('pay-btn').disabled = false;
 }
 
 // ─── Start polling ────────────────────────────────────────────────
 loadSeats();
 checkFlashSale();
-pollInterval = setInterval(loadSeats,      10000);
+pollInterval = setInterval(loadSeats, 3000);
 setInterval(checkFlashSale, 15000);
 </script>
 

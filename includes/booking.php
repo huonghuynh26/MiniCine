@@ -76,10 +76,12 @@ function getAvailableSeatPct(int $showId): int {
 // ─── Get seats layout for a show ─────────────────────────────────────────────
 function getSeatsLayout(int $showId): array {
     $db = db();
-    // Release expired holds
+
+    // Sync timezone: dùng NOW() của MySQL thay vì PHP time()
     $db->query("
         UPDATE tblSeatStatus
-        SET status='available', held_until=NULL, held_by=NULL, version_number=version_number+1
+        SET status='available', held_until=NULL, held_by=NULL,
+            version_number = version_number + 1
         WHERE status='held' AND held_until < NOW()
     ");
 
@@ -103,14 +105,14 @@ function holdSeats(int $showId, array $seatIds, int $userId): array {
     $db = db();
     $db->begin_transaction();
     try {
-        $held    = [];
-        $failed  = [];
-        $holdUntil = date('Y-m-d H:i:s', strtotime('+' . SEAT_HOLD_MINUTES . ' minutes'));
+        $held  = [];
+        $failed= [];
+        // Dùng MySQL NOW() để tránh lệch timezone PHP vs MySQL
+        $holdMinutes = SEAT_HOLD_MINUTES;
 
         foreach ($seatIds as $seatId) {
             $seatId = (int)$seatId;
 
-            // Get current status with lock
             $stmt = $db->prepare("
                 SELECT id, status, version_number
                 FROM tblSeatStatus
@@ -122,30 +124,32 @@ function holdSeats(int $showId, array $seatIds, int $userId): array {
             $row = $stmt->get_result()->fetch_assoc();
 
             if (!$row) {
-                // No row yet → insert as held
                 $ins = $db->prepare("
                     INSERT INTO tblSeatStatus (show_id,seat_id,status,version_number,held_until,held_by)
-                    VALUES (?,?,'held',1,?,?)
+                    VALUES (?,?,'held',1, DATE_ADD(NOW(), INTERVAL {$holdMinutes} MINUTE),?)
                 ");
-                $ins->bind_param('iisi', $showId, $seatId, $holdUntil, $userId);
+                $ins->bind_param('iii', $showId, $seatId, $userId);
                 $ins->execute();
                 $held[] = $seatId;
             } elseif ($row['status'] === 'available') {
                 $newVer = $row['version_number'] + 1;
                 $upd = $db->prepare("
                     UPDATE tblSeatStatus
-                    SET status='held', version_number=?, held_until=?, held_by=?
+                    SET status='held',
+                        version_number=?,
+                        held_until = DATE_ADD(NOW(), INTERVAL {$holdMinutes} MINUTE),
+                        held_by=?
                     WHERE show_id=? AND seat_id=? AND version_number=?
                 ");
-                $upd->bind_param('isiiii', $newVer, $holdUntil, $userId, $showId, $seatId, $row['version_number']);
+                $upd->bind_param('iiiii', $newVer, $userId, $showId, $seatId, $row['version_number']);
                 $upd->execute();
                 if ($upd->affected_rows === 1) {
                     $held[] = $seatId;
                 } else {
-                    $failed[] = $seatId; // Optimistic lock conflict
+                    $failed[] = $seatId;
                 }
             } else {
-                $failed[] = $seatId; // Already held/booked
+                $failed[] = $seatId;
             }
         }
 
@@ -167,16 +171,19 @@ function confirmBooking(int $showId, array $seatIds, int $userId): array {
     $db = db();
     $db->begin_transaction();
     try {
-        // Verify all seats are held by this user
-        $in  = implode(',', array_fill(0, count($seatIds), '?'));
-        $types = str_repeat('i', count($seatIds) + 2);
+        // Verify all seats are held by this user and not expired
+        $in     = implode(',', array_fill(0, count($seatIds), '?'));
+        $types  = str_repeat('i', count($seatIds) + 2);
         $params = array_merge([$showId, $userId], $seatIds);
 
         $stmt = $db->prepare("
-            SELECT ss.seat_id, s.type, ss.status
+            SELECT ss.seat_id, s.type, ss.status, ss.held_until
             FROM tblSeatStatus ss
             JOIN tblSeats s ON s.id = ss.seat_id
-            WHERE ss.show_id=? AND ss.held_by=? AND ss.seat_id IN ($in)
+            WHERE ss.show_id=? AND ss.held_by=?
+              AND ss.status='held'
+              AND ss.held_until > NOW()
+              AND ss.seat_id IN ($in)
         ");
         $stmt->bind_param($types, ...$params);
         $stmt->execute();
