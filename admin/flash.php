@@ -41,6 +41,33 @@ if ($action === 'delete') {
     $msg = 'Đã xoá Flash Sale.';
 }
 
+// Tạo Flash Sale tự động cho TẤT CẢ show chưa có
+if ($action === 'auto_create_all') {
+    $result = $db->query("
+        INSERT IGNORE INTO tblFlashSales(show_id, discount_pct, trigger_type, is_active)
+        SELECT s.id, 30, 'pre2h', 1
+        FROM tblShows s
+        WHERE s.end_time > NOW()
+          AND NOT EXISTS (
+            SELECT 1 FROM tblFlashSales fs
+            WHERE fs.show_id = s.id AND fs.trigger_type = 'pre2h'
+          )
+    ");
+    $cnt1 = $db->affected_rows;
+    $db->query("
+        INSERT IGNORE INTO tblFlashSales(show_id, discount_pct, trigger_type, is_active)
+        SELECT s.id, 50, 'post15m', 1
+        FROM tblShows s
+        WHERE s.end_time > NOW()
+          AND NOT EXISTS (
+            SELECT 1 FROM tblFlashSales fs
+            WHERE fs.show_id = s.id AND fs.trigger_type = 'post15m'
+          )
+    ");
+    $cnt2 = $db->affected_rows;
+    $msg = "Đã tạo Flash Sale tự động cho " . max($cnt1,$cnt2) . " suất chiếu.";
+}
+
 // Upcoming shows without flash sale
 $freeShows = $db->query("
     SELECT s.id, m.title, s.start_time, r.name as room_name
@@ -75,9 +102,15 @@ renderHead('Flash Sale');
 <div class="admin-layout">
 <?php include __DIR__ . '/sidebar.php'; ?>
 <div class="admin-content">
-  <h1 style="font-size:22px;font-weight:800;margin-bottom:8px">⚡ Quản lý Flash Sale</h1>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:12px">
+    <h1 style="font-size:22px;font-weight:800">⚡ Quản lý Flash Sale</h1>
+    <a href="?action=auto_create_all" class="btn btn-primary"
+       onclick="return confirm('Tự động tạo Flash Sale (pre2h -30% và post15m -50%) cho tất cả suất chiếu chưa có?')">
+      ⚡ Tạo tự động cho tất cả suất
+    </a>
+  </div>
   <p class="text-muted mb-3" style="font-size:14px">
-    Hệ thống tự động áp dụng: trước 2h nếu còn ≥30% ghế trống → -30% | sau 15 phút chiếu → -50%
+    Tự động kích hoạt: trước 2h nếu còn ≥30% ghế trống → -30% | sau 15 phút chiếu → -50%
   </p>
 
   <?php if ($msg): ?><div class="alert alert-success"><?= htmlspecialchars($msg) ?></div><?php endif; ?>

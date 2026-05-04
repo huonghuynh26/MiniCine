@@ -14,46 +14,53 @@ function getSeatPrice(string $type): int {
 // ─── Check Flash Sale for a show ─────────────────────────────────────────────
 function getFlashSale(int $showId): ?array {
     $db = db();
+    // Lấy TẤT CẢ flash sale active cho show này
     $stmt = $db->prepare("
         SELECT fs.*, s.start_time, s.end_time
         FROM tblFlashSales fs
         JOIN tblShows s ON s.id = fs.show_id
         WHERE fs.show_id = ? AND fs.is_active = 1
+        ORDER BY fs.discount_pct DESC
     ");
     $stmt->bind_param('i', $showId);
     $stmt->execute();
-    $sale = $stmt->get_result()->fetch_assoc();
-    if (!$sale) return null;
+    $sales = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    if (empty($sales)) return null;
 
     $now       = time();
-    $startTime = strtotime($sale['start_time']);
-    $endTime   = strtotime($sale['end_time']);
+    $startTime = strtotime($sales[0]['start_time']);
+    $endTime   = strtotime($sales[0]['end_time']);
     $pre2h     = $startTime - 2 * 3600;
     $post15m   = $startTime + 15 * 60;
 
-    // Manual: luôn active nếu is_active=1 và show chưa kết thúc
-    if ($sale['trigger_type'] === 'manual') {
-        if ($now <= $endTime) {
-            return ['discount_pct' => $sale['discount_pct'], 'reason' => 'Flash Sale'];
+    $best = null;
+
+    foreach ($sales as $sale) {
+        $disc = (int)$sale['discount_pct'];
+
+        if ($sale['trigger_type'] === 'manual' && $now <= $endTime) {
+            // Manual luôn active nếu show chưa kết thúc
+            if (!$best || $disc > $best['discount_pct']) {
+                $best = ['discount_pct' => $disc, 'reason' => "Flash Sale -{$disc}%"];
+            }
         }
-        return null;
-    }
 
-    // pre2h: active từ 2h trước đến lúc chiếu bắt đầu
-    if ($sale['trigger_type'] === 'pre2h' && $now >= $pre2h && $now < $startTime) {
-        $pct = getAvailableSeatPct($showId);
-        if ($pct >= 30) {
-            return ['discount_pct' => $sale['discount_pct'] ?: 30, 'reason' => 'Flash Sale -' . ($sale['discount_pct'] ?: 30) . '%'];
+        if ($sale['trigger_type'] === 'post15m' && $now >= $post15m && $now <= $endTime) {
+            // post15m ưu tiên cao nhất
+            if (!$best || $disc > $best['discount_pct']) {
+                $best = ['discount_pct' => $disc, 'reason' => "Flash Sale -{$disc}% (sau giờ chiếu)"];
+            }
         }
-        return null;
+
+        if ($sale['trigger_type'] === 'pre2h' && $now >= $pre2h && $now < $startTime) {
+            $pct = getAvailableSeatPct($showId);
+            if ($pct >= 30 && (!$best || $disc > $best['discount_pct'])) {
+                $best = ['discount_pct' => $disc, 'reason' => "Flash Sale -{$disc}% (trước giờ chiếu)"];
+            }
+        }
     }
 
-    // post15m: active từ 15 phút sau khi chiếu đến khi kết thúc
-    if ($sale['trigger_type'] === 'post15m' && $now >= $post15m && $now <= $endTime) {
-        return ['discount_pct' => $sale['discount_pct'] ?: 50, 'reason' => 'Flash Sale -' . ($sale['discount_pct'] ?: 50) . '%'];
-    }
-
-    return null;
+    return $best;
 }
 
 function getAvailableSeatPct(int $showId): int {
@@ -167,7 +174,7 @@ function holdSeats(int $showId, array $seatIds, int $userId): array {
 }
 
 // ─── Confirm booking (payment success) ───────────────────────────────────────
-function confirmBooking(int $showId, array $seatIds, int $userId): array {
+function confirmBooking(int $showId, array $seatIds, int $userId, int $pointsUsed = 0, int $pointsDiscount = 0): array {
     $db = db();
     $db->begin_transaction();
     try {
@@ -198,13 +205,13 @@ function confirmBooking(int $showId, array $seatIds, int $userId): array {
         $flash = getFlashSale($showId);
 
         // Calculate total
-        $total = 0;
-        $items = [];
+        $subtotal = 0;
+        $items    = [];
         foreach ($rows as $row) {
-            $basePrice = getSeatPrice($row['type']);
-            $discPct   = 0;
-            $finalPrice= $basePrice;
-            $isFlash   = false;
+            $basePrice  = getSeatPrice($row['type']);
+            $discPct    = 0;
+            $finalPrice = $basePrice;
+            $isFlash    = false;
 
             if ($flash && $row['type'] !== 'couple') {
                 $discPct    = $flash['discount_pct'];
@@ -212,8 +219,8 @@ function confirmBooking(int $showId, array $seatIds, int $userId): array {
                 $isFlash    = true;
             }
 
-            $total += $finalPrice;
-            $items[] = [
+            $subtotal += $finalPrice;
+            $items[]  = [
                 'seat_id'            => $row['seat_id'],
                 'type'               => $row['type'],
                 'original_price'     => $basePrice,
@@ -222,6 +229,9 @@ function confirmBooking(int $showId, array $seatIds, int $userId): array {
                 'discount_pct'       => $discPct,
             ];
         }
+
+        // Áp dụng giảm giá điểm (không âm)
+        $total = max(0, $subtotal - $pointsDiscount);
 
         // Create booking
         $qrCode = 'MC-' . strtoupper(bin2hex(random_bytes(6)));
@@ -254,7 +264,7 @@ function confirmBooking(int $showId, array $seatIds, int $userId): array {
             $stmt->bind_param('ii', $showId, $item['seat_id']);
             $stmt->execute();
 
-            // Award points
+            // Award earn points
             $pts = match($item['type']) {
                 'vip'    => POINTS_VIP,
                 'couple' => POINTS_COUPLE,
@@ -273,13 +283,31 @@ function confirmBooking(int $showId, array $seatIds, int $userId): array {
             $stmt->execute();
         }
 
+        // Trừ điểm đã dùng
+        if ($pointsUsed > 0) {
+            $stmt = $db->prepare("UPDATE tblUsers SET total_points=total_points-? WHERE id=? AND total_points>=?");
+            $stmt->bind_param('iii', $pointsUsed, $userId, $pointsUsed);
+            $stmt->execute();
+
+            $negPoints = -$pointsUsed;
+            $stmt = $db->prepare("
+                INSERT INTO tblPointsLog (user_id,booking_id,points_delta,reason)
+                VALUES (?,?,?,?)
+            ");
+            $reason = "Đổi điểm giảm giá - Booking #{$bookingId}";
+            $stmt->bind_param('iiis', $userId, $bookingId, $negPoints, $reason);
+            $stmt->execute();
+        }
+
         $db->commit();
         return [
-            'ok'         => true,
-            'booking_id' => $bookingId,
-            'qr_code'    => $qrCode,
-            'total'      => $total,
-            'items'      => $items,
+            'ok'              => true,
+            'booking_id'      => $bookingId,
+            'qr_code'         => $qrCode,
+            'total'           => $total,
+            'points_used'     => $pointsUsed,
+            'points_discount' => $pointsDiscount,
+            'items'           => $items,
         ];
     } catch (Throwable $e) {
         $db->rollback();

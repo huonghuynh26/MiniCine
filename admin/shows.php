@@ -60,7 +60,16 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     SELECT {$newShowId}, id, 'available', 0
                     FROM tblSeats WHERE room_id={$roomId}
                 ");
-                $msg = 'Đã tạo suất chiếu mới.';
+
+                // Tự động tạo 2 Flash Sale: pre2h (-30%) và post15m (-50%)
+                $db->query("
+                    INSERT IGNORE INTO tblFlashSales(show_id,discount_pct,trigger_type,is_active)
+                    VALUES
+                      ({$newShowId}, 30, 'pre2h',   1),
+                      ({$newShowId}, 50, 'post15m', 1)
+                ");
+
+                $msg = 'Đã tạo suất chiếu mới (Flash Sale tự động đã được bật).';
             }
         }
     }

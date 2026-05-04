@@ -74,7 +74,7 @@ renderHead('Đặt vé - ' . $show['movie_title']);
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 320px;gap:32px" id="booking-layout">
+  <div class="booking-grid" id="booking-layout">
 
     <!-- LEFT: Seat Map -->
     <div>
@@ -125,6 +125,34 @@ renderHead('Đặt vé - ' . $show['movie_title']);
           <p class="text-muted" style="font-size:13px">Chưa chọn ghế nào</p>
         </div>
         <hr class="divider">
+
+        <!-- Đổi điểm thưởng -->
+        <div id="points-section" style="display:none;margin-bottom:12px">
+          <div style="background:#1a1a00;border:1px solid #333300;border-radius:8px;padding:12px">
+            <div style="font-size:13px;font-weight:600;color:#f5c518;margin-bottom:8px">
+              ⭐ Dùng điểm thưởng
+            </div>
+            <div style="font-size:12px;color:#888;margin-bottom:8px">
+              Bạn có <strong id="user-points-display" style="color:#f5c518"><?= number_format($user['points']) ?></strong> điểm
+              = <strong style="color:#f5c518"><?= number_format(floor($user['points'] / 100) * 10000) ?>đ</strong>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" id="points-input" min="0" max="<?= $user['points'] ?>"
+                     step="100" value="0" placeholder="Nhập điểm"
+                     class="form-control" style="flex:1;padding:8px 10px;font-size:13px"
+                     oninput="applyPoints()">
+              <button class="btn btn-outline btn-sm" onclick="useAllPoints()" style="white-space:nowrap;flex-shrink:0">
+                Dùng tất cả
+              </button>
+            </div>
+            <div id="points-discount-display" style="font-size:12px;color:#4caf50;margin-top:6px"></div>
+          </div>
+        </div>
+
+        <div class="price-row" id="points-row" style="display:none">
+          <span class="label" style="color:#f5c518">⭐ Giảm từ điểm</span>
+          <span id="points-discount-amount" style="color:#f5c518">-0đ</span>
+        </div>
         <div class="price-row total">
           <span class="label">Tổng cộng</span>
           <span class="amount" id="total-price">0đ</span>
@@ -161,16 +189,20 @@ renderHead('Đặt vé - ' . $show['movie_title']);
 </div>
 
 <script>
-const SHOW_ID    = <?= $showId ?>;
-const BASE_URL   = '<?= APP_URL ?>';
-const FLASH_DISC = <?= $flash ? $flash['discount_pct'] : 0 ?>;
-const PRICES     = <?= json_encode($prices) ?>;
-const MY_ID      = <?= $user['id'] ?>;
+const SHOW_ID      = <?= $showId ?>;
+const BASE_URL     = '<?= APP_URL ?>';
+const FLASH_DISC   = <?= $flash ? $flash['discount_pct'] : 0 ?>;
+const PRICES       = <?= json_encode($prices) ?>;
+const MY_ID        = <?= $user['id'] ?>;
+const USER_POINTS  = <?= (int)$user['points'] ?>;
+const POINTS_RATE  = 100; // 100 điểm = 10000đ
+const POINTS_VALUE = 10000;
 
-let selected     = {};   // seatId → {id,row,number,type}
-let holdTimer    = null;
-let holdSeconds  = 0;
-let pollInterval = null;
+let selected       = {};
+let holdTimer      = null;
+let holdSeconds    = 0;
+let pollInterval   = null;
+let pointsUsed     = 0;  // điểm đang dùng
 
 // ─── Load seat map ────────────────────────────────────────────────
 async function loadSeats() {
@@ -330,20 +362,27 @@ async function clearSelection() {
 // ─── Summary ──────────────────────────────────────────────────────
 function updateSummary() {
   const items = Object.values(selected);
+
+  // Ẩn/hiện section điểm
+  document.getElementById('points-section').style.display = items.length ? 'block' : 'none';
+
   if (!items.length) {
     document.getElementById('selected-list').innerHTML = '<p class="text-muted" style="font-size:13px">Chưa chọn ghế nào</p>';
     document.getElementById('total-price').textContent = '0đ';
     document.getElementById('pay-btn').disabled = true;
+    document.getElementById('points-row').style.display = 'none';
+    pointsUsed = 0;
+    if (document.getElementById('points-input')) document.getElementById('points-input').value = 0;
     return;
   }
 
-  let total = 0;
-  let html  = '';
+  let subtotal = 0;
+  let html = '';
   items.forEach(s => {
     const base  = PRICES[s.type] || 0;
     const disc  = (currentFlashDisc > 0 && s.type !== 'couple') ? currentFlashDisc : 0;
     const price = Math.round(base * (1 - disc / 100));
-    total += price;
+    subtotal += price;
     const label = s.type === 'couple'
       ? `${s.row}${s.number*2-1}-${s.row}${s.number*2}`
       : `${s.row}${s.number}`;
@@ -358,8 +397,74 @@ function updateSummary() {
   });
 
   document.getElementById('selected-list').innerHTML = html;
-  document.getElementById('total-price').textContent = total.toLocaleString() + 'đ';
+
+  // Tính giảm từ điểm
+  const pointsDiscount = Math.floor(pointsUsed / POINTS_RATE) * POINTS_VALUE;
+  const finalTotal = Math.max(0, subtotal - pointsDiscount);
+
+  // Hiện dòng giảm điểm
+  if (pointsDiscount > 0) {
+    document.getElementById('points-row').style.display = 'flex';
+    document.getElementById('points-discount-amount').textContent = '-' + pointsDiscount.toLocaleString() + 'đ';
+  } else {
+    document.getElementById('points-row').style.display = 'none';
+  }
+
+  document.getElementById('total-price').textContent = finalTotal.toLocaleString() + 'đ';
   document.getElementById('pay-btn').disabled = false;
+}
+
+// ─── Points functions ─────────────────────────────────────────
+function applyPoints() {
+  const input = document.getElementById('points-input');
+  let pts = parseInt(input.value) || 0;
+
+  // Làm tròn xuống bội số 100
+  pts = Math.floor(pts / 100) * 100;
+
+  // Tính subtotal hiện tại
+  let subtotal = Object.values(selected).reduce((sum, s) => {
+    const base = PRICES[s.type] || 0;
+    const disc = (currentFlashDisc > 0 && s.type !== 'couple') ? currentFlashDisc : 0;
+    return sum + Math.round(base * (1 - disc / 100));
+  }, 0);
+
+  // Không dùng điểm quá tổng tiền
+  const maxPointsByTotal = Math.floor(subtotal / POINTS_VALUE) * POINTS_RATE;
+  pts = Math.min(pts, USER_POINTS, maxPointsByTotal);
+  pts = Math.max(0, pts);
+
+  input.value = pts;
+  pointsUsed  = pts;
+
+  const discount = Math.floor(pts / POINTS_RATE) * POINTS_VALUE;
+  const display  = document.getElementById('points-discount-display');
+  if (pts > 0) {
+    display.textContent = `✓ Giảm ${discount.toLocaleString()}đ (dùng ${pts.toLocaleString()} điểm)`;
+  } else {
+    display.textContent = '';
+  }
+
+  updateSummary();
+}
+
+function useAllPoints() {
+  let subtotal = Object.values(selected).reduce((sum, s) => {
+    const base = PRICES[s.type] || 0;
+    const disc = (currentFlashDisc > 0 && s.type !== 'couple') ? currentFlashDisc : 0;
+    return sum + Math.round(base * (1 - disc / 100));
+  }, 0);
+
+  const maxByTotal = Math.floor(subtotal / POINTS_VALUE) * POINTS_RATE;
+  const pts = Math.min(USER_POINTS, maxByTotal);
+  document.getElementById('points-input').value = pts;
+  pointsUsed = pts;
+
+  const discount = Math.floor(pts / POINTS_RATE) * POINTS_VALUE;
+  document.getElementById('points-discount-display').textContent =
+    pts > 0 ? `✓ Giảm ${discount.toLocaleString()}đ (dùng ${pts.toLocaleString()} điểm)` : '';
+
+  updateSummary();
 }
 
 // ─── Suggest ──────────────────────────────────────────────────────
@@ -453,12 +558,21 @@ async function proceedPayment() {
     return;
   }
 
+  const pointsDiscount = Math.floor(pointsUsed / POINTS_RATE) * POINTS_VALUE;
   const total = Object.values(selected).reduce((sum, s) => {
     const base = PRICES[s.type] || 0;
     const disc = (currentFlashDisc > 0 && s.type !== 'couple') ? currentFlashDisc : 0;
     return sum + Math.round(base * (1 - disc / 100));
   }, 0);
-  document.getElementById('pay-amount-display').textContent = total.toLocaleString() + 'đ';
+  const finalTotal = Math.max(0, total - pointsDiscount);
+
+  document.getElementById('pay-amount-display').textContent = finalTotal.toLocaleString() + 'đ';
+  if (pointsDiscount > 0) {
+    document.getElementById('pay-amount-display').innerHTML =
+      `<span style="text-decoration:line-through;color:#555;font-size:14px">${total.toLocaleString()}đ</span>
+       <br><strong style="color:#f5c518">-${pointsDiscount.toLocaleString()}đ điểm thưởng</strong>
+       <br><strong style="font-size:22px">${finalTotal.toLocaleString()}đ</strong>`;
+  }
   document.getElementById('pay-ref').textContent = 'MINICINE-' + Date.now();
   document.getElementById('payment-modal').style.display = 'flex';
   document.getElementById('pay-btn').textContent = 'Tiếp tục thanh toán →';
@@ -474,7 +588,7 @@ async function confirmPayment() {
   const res = await fetch(`${BASE_URL}/api/confirm.php`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ show_id: SHOW_ID, seat_ids: seatIds })
+    body: JSON.stringify({ show_id: SHOW_ID, seat_ids: seatIds, points_used: pointsUsed })
   });
   const data = await res.json();
   if (data.ok) {
@@ -520,7 +634,18 @@ async function checkFlashSale() {
 loadSeats();
 checkFlashSale();
 pollInterval = setInterval(loadSeats, 3000);
-setInterval(checkFlashSale, 15000);
+setInterval(checkFlashSale, 10000); // check flash sale mỗi 10s để bắt post15m kịp thời
+
+// ─── Release ghế khi user đóng tab / thoát trang ─────────────────
+function releaseAllHeld() {
+  const seatIds = Object.keys(selected).map(Number);
+  if (!seatIds.length) return;
+  const payload = JSON.stringify({ show_id: SHOW_ID, seat_ids: seatIds, user_id: MY_ID });
+  navigator.sendBeacon(`${BASE_URL}/api/release.php`, new Blob([payload], { type: 'application/json' }));
+}
+
+window.addEventListener('beforeunload', releaseAllHeld);
+window.addEventListener('pagehide',     releaseAllHeld); // iOS Safari
 </script>
 
 <?php renderFooter(); ?>

@@ -11,16 +11,25 @@ startSession();
 $user = currentUser();
 if (!$user) { echo json_encode(['ok' => false, 'msg' => 'Vui lòng đăng nhập.']); exit; }
 
-$body    = json_decode(file_get_contents('php://input'), true);
-$showId  = (int)($body['show_id'] ?? 0);
-$seatIds = array_map('intval', $body['seat_ids'] ?? []);
+$body      = json_decode(file_get_contents('php://input'), true);
+$showId    = (int)($body['show_id']    ?? 0);
+$seatIds   = array_map('intval', $body['seat_ids']   ?? []);
+$pointsUsed= (int)($body['points_used'] ?? 0);
 
 if (!$showId || empty($seatIds)) {
     echo json_encode(['ok' => false, 'msg' => 'Thiếu dữ liệu.']);
     exit;
 }
 
-$result = confirmBooking($showId, $seatIds, $user['id']);
+// Validate điểm không vượt quá điểm user có
+$db = db();
+$userPoints = (int)$db->query("SELECT total_points FROM tblUsers WHERE id={$user['id']}")->fetch_assoc()['total_points'];
+if ($pointsUsed > $userPoints) $pointsUsed = $userPoints;
+// Làm tròn xuống bội số 100
+$pointsUsed = (int)(floor($pointsUsed / 100) * 100);
+$pointsDiscount = (int)(floor($pointsUsed / 100) * 10000);
+
+$result = confirmBooking($showId, $seatIds, $user['id'], $pointsUsed, $pointsDiscount);
 if (!$result['ok']) {
     echo json_encode($result);
     exit;

@@ -6,14 +6,15 @@ require_once __DIR__ . '/../includes/auth.php';
 header('Content-Type: application/json');
 startSession();
 
-$user = currentUser();
-if (!$user) { echo json_encode(['ok' => false]); exit; }
-
 $body    = json_decode(file_get_contents('php://input'), true);
-$showId  = (int)($body['show_id'] ?? 0);
+$showId  = (int)($body['show_id']  ?? 0);
 $seatIds = array_map('intval', $body['seat_ids'] ?? []);
 
-if (!$showId || empty($seatIds)) {
+// Lấy user_id từ session hoặc từ body (sendBeacon khi đóng tab)
+$user   = currentUser();
+$userId = $user ? (int)$user['id'] : (int)($body['user_id'] ?? 0);
+
+if (!$userId || !$showId || empty($seatIds)) {
     echo json_encode(['ok' => false]);
     exit;
 }
@@ -21,9 +22,9 @@ if (!$showId || empty($seatIds)) {
 $db = db();
 $db->begin_transaction();
 try {
-    $in = implode(',', array_fill(0, count($seatIds), '?'));
+    $in     = implode(',', array_fill(0, count($seatIds), '?'));
     $types  = 'ii' . str_repeat('i', count($seatIds));
-    $params = array_merge([$showId, $user['id']], $seatIds);
+    $params = array_merge([$showId, $userId], $seatIds);
 
     $stmt = $db->prepare("
         UPDATE tblSeatStatus
