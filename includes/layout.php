@@ -1,13 +1,48 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../includes/auth.php';
 
 function renderHead(string $title = 'MiniCine', string $extra = ''): void {
     $t    = htmlspecialchars($title);
     $base = APP_URL;
+    $user = currentUser();
 
-    // CSS path tuyệt đối từ server root
-    $cssPath = parse_url($base, PHP_URL_PATH) . '/assets/css/main.css';
+    // Script check session — inject vào MỌI trang, chạy ngay khi load
+    $sessionCheckScript = '';
+    if ($user && $user['role'] !== 'admin') {
+        $sessionCheckScript = "
+<script>
+(function() {
+  // Check ngay khi trang load
+  async function checkSession() {
+    try {
+      const res  = await fetch('{$base}/api/session_check.php?_=' + Date.now());
+      const data = await res.json();
+      if (!data.ok && data.reason === 'locked') {
+        alert('🔒 ' + (data.msg || 'Tài khoản đã bị khóa.'));
+        window.location.href = '{$base}/login.php';
+      }
+    } catch(e) {}
+  }
+
+  // Chạy ngay khi DOM ready
+  document.addEventListener('DOMContentLoaded', checkSession);
+
+  // Và poll mỗi 15s
+  setInterval(checkSession, 15000);
+
+  // Và mỗi khi user click bất cứ đâu
+  let lastCheck = 0;
+  document.addEventListener('click', function() {
+    const now = Date.now();
+    if (now - lastCheck > 5000) { // throttle 5s để không spam
+      lastCheck = now;
+      checkSession();
+    }
+  }, true);
+})();
+</script>";
+    }
 
     echo "<!DOCTYPE html>
 <html lang=\"vi\">
@@ -17,10 +52,11 @@ function renderHead(string $title = 'MiniCine', string $extra = ''): void {
 <title>{$t} – MiniCine</title>
 <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">
 <link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap\" rel=\"stylesheet\">
-<link rel=\"stylesheet\" href=\"{$cssPath}\">
+<link rel=\"stylesheet\" href=\"" . parse_url($base, PHP_URL_PATH) . "/assets/css/main.css\">
 {$extra}
 </head>
-<body>\n";
+<body>
+{$sessionCheckScript}\n";
 }
 
 function renderNav(): void {

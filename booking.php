@@ -644,6 +644,18 @@ function releaseAllHeld() {
   navigator.sendBeacon(`${BASE_URL}/api/release.php`, new Blob([payload], { type: 'application/json' }));
 }
 
+// ─── Poll session mỗi 30s — phát hiện tài khoản bị khóa ──────────
+async function checkSession() {
+  const res  = await fetch(`${BASE_URL}/api/session_check.php?_=${Date.now()}`);
+  const data = await res.json();
+  if (!data.ok && data.reason === 'locked') {
+    clearInterval(pollInterval);
+    clearInterval(holdTimer);
+    alert('🔒 ' + data.msg);
+    window.location.href = BASE_URL + '/login.php';
+  }
+}
+setInterval(checkSession, 30000); // check mỗi 30s
 window.addEventListener('beforeunload', releaseAllHeld);
 window.addEventListener('pagehide',     releaseAllHeld); // iOS Safari
 </script>

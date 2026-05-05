@@ -807,11 +807,6 @@ tr:hover td {
   }
 }
 
-/* ─── Booking page ───────────────────────────────────────────── */
-@media (max-width: 1024px) {
-  /* .booking-grid đã handle ở trên */
-}
-
 /* Sticky summary bar ở dưới màn hình mobile */
 @media (max-width: 768px) {
   #price-summary {
@@ -1220,10 +1215,10 @@ tr:hover td {
   align-items: start;
 }
 
-/* Tablet và mobile: 1 cột, summary xuống dưới */
-@media (max-width: 1024px) {
+/* Chỉ mobile ≤ 768px mới chuyển 1 cột + sticky */
+@media (max-width: 768px) {
   .booking-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 16px;
   }
 }

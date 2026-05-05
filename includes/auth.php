@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/mail.php';
+require_once __DIR__ . '/../includes/mail.php';
 
 // ─── Session ─────────────────────────────────────────────────────────────────
 function startSession(): void {
@@ -14,15 +14,37 @@ function currentUser(): ?array {
     return $_SESSION['user'] ?? null;
 }
 
+// ─── Check tài khoản từ DB realtime ──────────────────────────────────────────
+function checkUserActiveFromDB(int $userId): bool {
+    $db   = db();
+    $stmt = $db->prepare("SELECT email_verified FROM tblUsers WHERE id=? LIMIT 1");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return $row && (int)$row['email_verified'] === 1;
+}
+
+// ─── requireLogin: check session + DB realtime ────────────────────────────────
 function requireLogin(): void {
-    if (!currentUser()) {
+    startSession();
+    $user = $_SESSION['user'] ?? null;
+
+    if (!$user) {
         header('Location: ' . APP_URL . '/login.php');
+        exit;
+    }
+
+    // Check DB realtime — phát hiện tài khoản bị khóa dù session vẫn còn
+    if (!checkUserActiveFromDB($user['id'])) {
+        session_destroy();
+        header('Location: ' . APP_URL . '/login.php?locked=1');
         exit;
     }
 }
 
 function requireAdmin(): void {
-    $u = currentUser();
+    startSession();
+    $u = $_SESSION['user'] ?? null;
     if (!$u || $u['role'] !== 'admin') {
         header('Location: ' . APP_URL . '/index.php');
         exit;
@@ -39,7 +61,6 @@ function registerUser(string $email, string $password, string $name): array {
     $db = db();
     $email = strtolower(trim($email));
 
-    // Check duplicate
     $stmt = $db->prepare("SELECT id FROM tblUsers WHERE email = ?");
     $stmt->bind_param('s', $email);
     $stmt->execute();
@@ -56,7 +77,6 @@ function registerUser(string $email, string $password, string $name): array {
     $stmt->bind_param('ssss', $email, $hash, $name, $token);
     $stmt->execute();
 
-    // Send verification email
     $link = APP_URL . '/verify.php?token=' . $token;
     sendVerifyEmail($email, $name, $link);
 
@@ -78,16 +98,24 @@ function loginUser(string $email, string $password): array {
         return ['ok' => false, 'msg' => 'Email hoặc mật khẩu không đúng.'];
     }
     if (!$user['email_verified']) {
-        return ['ok' => false, 'msg' => 'Tài khoản chưa xác thực email.'];
+        // Phân biệt: chưa xác thực email vs bị admin khóa
+        // Nếu verify_token còn tồn tại → chưa xác thực email
+        // Nếu verify_token = NULL → đã bị admin khóa thủ công
+        if ($user['verify_token']) {
+            return ['ok' => false, 'msg' => 'Tài khoản chưa xác thực email. Vui lòng kiểm tra hộp thư.'];
+        } else {
+            return ['ok' => false, 'msg' => 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.'];
+        }
     }
 
     startSession();
+    session_regenerate_id(true);
     $_SESSION['user'] = [
-        'id'    => $user['id'],
-        'email' => $user['email'],
-        'name'  => $user['full_name'],
-        'role'  => $user['role'],
-        'points'=> $user['total_points'],
+        'id'     => $user['id'],
+        'email'  => $user['email'],
+        'name'   => $user['full_name'],
+        'role'   => $user['role'],
+        'points' => $user['total_points'],
     ];
     return ['ok' => true, 'role' => $user['role']];
 }

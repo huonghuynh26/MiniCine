@@ -9,17 +9,31 @@ $db  = db();
 $msg = '';
 
 if (isset($_GET['action']) && $_GET['action'] === 'toggle') {
-    $id   = (int)$_GET['id'];
-    $me   = currentUser();
-    if ($id !== $me['id']) {
-        $db->query("UPDATE tblUsers SET email_verified = NOT email_verified WHERE id=$id");
-        $msg = 'Đã thay đổi trạng thái tài khoản.';
+    $id  = (int)$_GET['id'];
+    $me  = currentUser();
+    if ($id !== (int)$me['id']) {
+        // Lấy trạng thái hiện tại
+        $cur = $db->query("SELECT email_verified FROM tblUsers WHERE id=$id")->fetch_assoc();
+
+        if ($cur['email_verified']) {
+            // Đang active → khóa: set email_verified=0, verify_token=NULL
+            // verify_token=NULL giúp phân biệt "bị khóa" vs "chưa xác thực"
+            $db->query("UPDATE tblUsers SET email_verified=0, verify_token=NULL WHERE id=$id");
+            $msg = 'Đã khóa tài khoản.';
+        } else {
+            // Đang khóa → mở khóa
+            $db->query("UPDATE tblUsers SET email_verified=1 WHERE id=$id");
+            $msg = 'Đã mở khóa tài khoản.';
+        }
     }
 }
 
 $search = trim($_GET['q'] ?? '');
 $where  = "role='customer'";
-if ($search) $where .= " AND (email LIKE '%".addslashes($search)."%' OR full_name LIKE '%".addslashes($search)."%')";
+if ($search) {
+    $s = addslashes($search);
+    $where .= " AND (email LIKE '%{$s}%' OR full_name LIKE '%{$s}%')";
+}
 
 $users = $db->query("
     SELECT u.*,
@@ -54,23 +68,32 @@ renderHead('Khách hàng');
         <tr><th>Tên</th><th>Email</th><th>Trạng thái</th><th>Đặt vé</th><th>Chi tiêu</th><th>Điểm</th><th>Ngày đăng ký</th><th>Thao tác</th></tr>
       </thead>
       <tbody>
-        <?php foreach ($users as $u): ?>
+        <?php foreach ($users as $u):
+          // Phân biệt trạng thái
+          if ($u['email_verified']) {
+              $statusLabel = '✓ Đang hoạt động';
+              $statusColor = 'background:#0f2d1a;color:#4caf50';
+          } elseif ($u['verify_token']) {
+              $statusLabel = '⏳ Chờ xác thực email';
+              $statusColor = 'background:#2d220f;color:#ff9800';
+          } else {
+              $statusLabel = '🔒 Đã bị khóa';
+              $statusColor = 'background:#2d0f0f;color:#ff4444';
+          }
+        ?>
         <tr>
           <td style="font-weight:500"><?= htmlspecialchars($u['full_name']) ?></td>
           <td class="text-muted"><?= htmlspecialchars($u['email']) ?></td>
-          <td>
-            <span class="badge" style="background:<?= $u['email_verified']?'#0f2d1a':'#2d1a0a' ?>;
-              color:<?= $u['email_verified']?'#4caf50':'#ff9800' ?>">
-              <?= $u['email_verified'] ? '✓ Đã xác thực' : '⏳ Chờ xác thực' ?>
-            </span>
-          </td>
+          <td><span class="badge" style="<?= $statusColor ?>"><?= $statusLabel ?></span></td>
           <td><?= $u['booking_count'] ?> đơn</td>
           <td style="color:#e50914;font-weight:600"><?= number_format($u['total_spent']) ?>đ</td>
           <td class="text-gold">⭐ <?= number_format($u['total_points']) ?></td>
           <td class="text-muted" style="font-size:12px"><?= date('d/m/Y', strtotime($u['created_at'])) ?></td>
           <td>
-            <a href="?action=toggle&id=<?= $u['id'] ?>" class="btn btn-outline btn-sm">
-              <?= $u['email_verified'] ? 'Khoá' : 'Kích hoạt' ?>
+            <a href="?action=toggle&id=<?= $u['id'] ?>"
+               class="btn btn-sm <?= $u['email_verified'] ? 'btn-danger' : 'btn-success' ?>"
+               onclick="return confirm('<?= $u['email_verified'] ? 'Khóa tài khoản này?' : 'Mở khóa tài khoản này?' ?>')">
+              <?= $u['email_verified'] ? '🔒 Khóa' : '🔓 Mở khóa' ?>
             </a>
           </td>
         </tr>
