@@ -76,9 +76,6 @@ foreach ($result['items'] as $item) {
     $emailItems[] = array_merge($item, ['seat_label' => $label]);
 }
 
-$qrText   = $result['qr_code'];
-$qrDataUri = generateTextQR($qrText);
-
 $bookingData = [
     'id'          => $result['booking_id'],
     'movie_title' => $show['movie_title'],
@@ -88,7 +85,8 @@ $bookingData = [
     'items'       => $emailItems,
 ];
 
-sendBookingConfirmEmail($user['email'], $user['name'], $bookingData, $qrDataUri);
+// Truyền qr_code string trực tiếp — mail.php tự dùng Google Charts API
+sendBookingConfirmEmail($user['email'], $user['name'], $bookingData, $result['qr_code']);
 
 // Update session points
 $_SESSION['user']['points'] = (int)$db->query(
@@ -96,14 +94,3 @@ $_SESSION['user']['points'] = (int)$db->query(
 )->fetch_assoc()['total_points'];
 
 echo json_encode($result);
-
-function generateTextQR(string $text): string {
-    $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">'
-         . '<rect width="180" height="180" fill="#fff"/>'
-         . '<rect x="10" y="10" width="160" height="160" fill="none" stroke="#000" stroke-width="2"/>'
-         . '<text x="90" y="80" text-anchor="middle" font-family="monospace" font-size="11" fill="#000">QR CODE</text>'
-         . '<text x="90" y="100" text-anchor="middle" font-family="monospace" font-size="9" fill="#000">' . htmlspecialchars($text) . '</text>'
-         . '<text x="90" y="120" text-anchor="middle" font-family="monospace" font-size="8" fill="#999">Xuất trình tại cửa rạp</text>'
-         . '</svg>';
-    return 'data:image/svg+xml;base64,' . base64_encode($svg);
-}

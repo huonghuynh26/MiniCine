@@ -64,28 +64,86 @@ function renderNav(): void {
     $base = APP_URL;
     $name = $u ? htmlspecialchars($u['name']) : '';
     $pts  = $u ? number_format($u['points'])  : '0';
+    ?>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a class="navbar-brand" href="<?= $base ?>/index.php">
+      <div class="brand-icon">🎬</div>
+      <span>MINI<em>CINE</em></span>
+    </a>
+    <a href="<?= $base ?>/booking.php" class="btn-buy-ticket">
+      <span class="star-icon">★</span> Mua Vé
+    </a>
+    <ul class="nav-menu">
+      <li class="has-dropdown">
+        <a href="<?= $base ?>/star_shop.php">Star Shop <span class="chevron">▾</span></a>
+        <div class="nav-dropdown">
+          <a href="<?= $base ?>/star_shop.php?tab=combo">🍿 Combo Bắp & Nước</a>
+          <a href="<?= $base ?>/star_shop.php?tab=merchandise">🛍️ Quà Lưu Niệm</a>
+          <a href="<?= $base ?>/star_shop.php?tab=limited">⭐ Phiên Bản Giới Hạn</a>
+        </div>
+      </li>
+      <?php if ($u && $u['role'] === 'admin'): ?>
+      <li><a href="<?= $base ?>/admin/index.php">⚙ Admin</a></li>
+      <?php endif; ?>
+    </ul>
+    <div class="nav-right">
+      <button class="nav-icon-btn" title="Tìm kiếm">🔍</button>
 
-    echo "<nav class=\"navbar\">\n";
-    echo "  <a class=\"navbar-brand\" href=\"{$base}/index.php\">MINI<span>CINE</span></a>\n";
-    echo "  <div class=\"navbar-links\">\n";
+      <?php if ($u): ?>
+        <!-- Giỏ hàng -->
+        <a href="<?= $base ?>/cart.php" class="nav-cart-btn" id="navCartBtn" title="Giỏ hàng">
+          🛒
+          <span class="nav-cart-count" id="navCartCount" style="display:none">0</span>
+        </a>
 
-    if ($u && $u['role'] === 'admin') {
-        echo "    <a href='{$base}/admin/index.php'>⚙ Admin</a>\n";
-    }
+        <!-- Avatar dropdown -->
+        <div class="nav-avatar-wrap">
+          <div class="nav-avatar" id="navAvatar">
+            <div class="nav-avatar-circle"><?= mb_strtoupper(mb_substr($name,0,1)) ?></div>
+          </div>
+          <div class="nav-avatar-dropdown">
+            <div class="nav-avatar-header">
+              <div class="nav-avatar-circle-lg"><?= mb_strtoupper(mb_substr($name,0,1)) ?></div>
+              <div>
+                <div style="font-weight:700;font-size:14px;color:#222"><?= $name ?></div>
+                <div style="font-size:12px;color:#f5a623;font-weight:600">⭐ <?= $pts ?> điểm Stars</div>
+              </div>
+            </div>
+            <a href="<?= $base ?>/my_bookings.php" class="nav-avatar-item">🎟️ Lịch sử đặt vé</a>
+            <a href="<?= $base ?>/cart.php" class="nav-avatar-item">🛒 Giỏ hàng</a>
+            <?php if ($u['role'] === 'admin'): ?>
+            <a href="<?= $base ?>/admin/index.php" class="nav-avatar-item">⚙️ Quản trị</a>
+            <?php endif; ?>
+            <a href="<?= $base ?>/logout.php" class="nav-avatar-item nav-avatar-logout">↩️ Đăng xuất</a>
+          </div>
+        </div>
 
-    if ($u) {
-        echo "    <span class='nav-points'>⭐ {$pts} điểm</span>\n";
-        echo "    <a href='{$base}/my_bookings.php'>Vé của tôi</a>\n";
-        echo "    <a href='{$base}/logout.php' class='btn btn-outline'>Đăng xuất ({$name})</a>\n";
-    } else {
-        echo "    <a href='{$base}/login.php' class='btn btn-outline'>Đăng nhập</a>\n";
-        echo "    <a href='{$base}/register.php' class='btn btn-primary'>Đăng ký</a>\n";
-    }
-
-    echo "  </div>\n</nav>\n";
+      <?php else: ?>
+        <a href="<?= $base ?>/login.php" class="nav-text-link">Đăng Nhập</a>
+        <a href="<?= $base ?>/register.php" class="btn-nav-gstar"><span>★</span> Đăng Ký</a>
+      <?php endif; ?>
+    </div>
+  </div>
+</nav>
+<?php
 }
 
 function renderFooter(): void {
-    $y = date('Y');
-    echo "<footer class=\"footer\"><p>© {$y} MiniCine · Rạp chiếu phim chất lượng cao · 4 tầng, 3 phòng chiếu</p></footer>\n</body></html>";
+    $base = APP_URL;
+    $y    = date('Y');
+    echo "<footer class=\"footer\"><p>© {$y} MiniCine · Rạp chiếu phim chất lượng cao · 4 tầng, 3 phòng chiếu</p></footer>\n";
+    $cartCount = 0;
+    if (isset($_SESSION['cart'])) {
+        $cartCount = array_sum(array_column($_SESSION['cart'], 'qty'));
+    }
+    echo "<script>
+(function(){
+  const badge = document.getElementById('navCartCount');
+  if (badge) {
+    const c = {$cartCount};
+    if (c > 0) { badge.textContent = c; badge.style.display = 'flex'; }
+  }
+})();
+</script>\n</body></html>";
 }

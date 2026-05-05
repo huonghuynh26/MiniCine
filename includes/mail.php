@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/qr_png.php';
 
 // PHPMailer via Composer autoload hoặc manual include
 $phpmailerPath = __DIR__ . '/../vendor/autoload.php';
@@ -97,7 +98,7 @@ function sendResetEmail(string $to, string $name, string $link): bool {
     }
 }
 
-function sendBookingConfirmEmail(string $to, string $name, array $booking, string $qrDataUri): bool {
+function sendBookingConfirmEmail(string $to, string $name, array $booking, string $qrCode): bool {
     try {
         $mail = createMailer();
         $mail->addAddress($to, $name);
@@ -110,12 +111,15 @@ function sendBookingConfirmEmail(string $to, string $name, array $booking, strin
                 ? "<span style='color:#e50914;font-size:12px'> (-{$item['discount_pct']}% Flash Sale)</span>"
                 : '';
             $items .= "<tr>
-              <td style='padding:8px 0;border-bottom:1px solid #333'>" . htmlspecialchars($item['seat_label']) . "</td>
-              <td style='padding:8px 0;border-bottom:1px solid #333;text-align:right'>
+              <td style='padding:8px 0;border-bottom:1px solid #2a2a2a'>" . htmlspecialchars($item['seat_label']) . "</td>
+              <td style='padding:8px 0;border-bottom:1px solid #2a2a2a;text-align:right'>
                 " . number_format($item['price']) . "đ{$flash}
               </td>
             </tr>";
         }
+
+        // Generate QR PNG base64 via Python script (embed trực tiếp — Gmail không block)
+        $qrDataUri = generateQrPng($qrCode);
 
         $mail->Body = emailTemplate('Đặt vé thành công! 🎉', "
             <p>Xin chào <strong>" . htmlspecialchars($name) . "</strong>, vé của bạn đã được xác nhận!</p>
@@ -139,10 +143,13 @@ function sendBookingConfirmEmail(string $to, string $name, array $booking, strin
                   . number_format($booking['total_price']) . "đ</td>
               </tr>
             </table>
-            <div style='text-align:center;margin:24px 0'>
-              <img src='" . $qrDataUri . "' alt='QR Code'
-                   style='width:180px;height:180px;border:4px solid #333;border-radius:8px'/>
-              <p style='color:#999;font-size:12px;margin-top:8px'>Xuất trình mã QR này tại cửa rạp</p>
+            <div style='text-align:center;margin:28px 0'>
+              <div style='display:inline-block;background:#ffffff;padding:14px;border-radius:12px;border:3px solid #e0e0e0'>
+                <img src='" . $qrDataUri . "' alt='QR Code' width='180' height='180'
+                     style='display:block;width:180px;height:180px'/>
+              </div>
+              <p style='color:#aaa;font-size:13px;margin-top:12px'>Xuất trình mã QR này tại cửa rạp</p>
+              <p style='color:#888;font-size:11px;font-family:monospace;margin-top:4px'>" . htmlspecialchars($qrCode) . "</p>
             </div>
         ");
         $mail->send();
@@ -171,4 +178,74 @@ function emailTemplate(string $title, string $content): string {
         </p>
       </div>
     </body></html>";
+}
+
+function sendShopOrderEmail(string $to, string $name, array $order): bool {
+    try {
+        $mail = createMailer();
+        $mail->addAddress($to, $name);
+        $mail->isHTML(true);
+        $mail->Subject = '[MiniCine] Xác nhận đơn hàng ' . $order['code'];
+
+        $rows = '';
+        foreach ($order['items'] as $item) {
+            $qty = $item['qty'] ?? 1;
+            $rows .= "<tr>
+              <td style='padding:8px 0;border-bottom:1px solid #2a2a2a'>"
+                . $item['emoji'] . ' ' . htmlspecialchars($item['name'])
+                . ($qty > 1 ? " <span style='color:#aaa'>×{$qty}</span>" : '')
+              . "</td>
+              <td style='padding:8px 0;border-bottom:1px solid #2a2a2a;text-align:right'>"
+                . number_format($item['price'] * $qty) . "đ</td>
+            </tr>";
+        }
+
+        $discountRow = '';
+        if ($order['points_discount'] > 0) {
+            $discountRow = "<tr>
+              <td style='padding:8px 0;color:#f5c518'>⭐ Giảm điểm Stars</td>
+              <td style='padding:8px 0;text-align:right;color:#f5c518'>-" . number_format($order['points_discount']) . "đ</td>
+            </tr>";
+        }
+
+        $qrDataUri = generateQrPng($order['code']);
+
+        $mail->Body = emailTemplate('Đặt hàng thành công! 🛍️', "
+            <p>Xin chào <strong>" . htmlspecialchars($name) . "</strong>, đơn hàng của bạn đã được xác nhận!</p>
+            <p style='color:#999;font-size:13px'>Xuất trình mã QR bên dưới tại quầy MiniCine để nhận sản phẩm.</p>
+            <table style='width:100%;border-collapse:collapse;margin:16px 0'>
+              <tr>
+                <th style='text-align:left;padding:8px 0;border-bottom:1px solid #444'>Sản phẩm</th>
+                <th style='text-align:right;padding:8px 0;border-bottom:1px solid #444'>Giá</th>
+              </tr>
+              {$rows}
+              {$discountRow}
+              <tr>
+                <td style='padding:12px 0;font-weight:700;font-size:16px'>Tổng thanh toán</td>
+                <td style='text-align:right;font-weight:700;font-size:16px;color:#e50914'>"
+                  . number_format($order['total']) . "đ</td>
+              </tr>
+            </table>
+            <table style='width:100%;border-collapse:collapse;margin:16px 0'>
+              <tr><td style='color:#999;padding:6px 0'>Mã đơn hàng</td>
+                  <td style='text-align:right;font-family:monospace;color:#e50914;font-weight:700'>" . htmlspecialchars($order['code']) . "</td></tr>
+              <tr><td style='color:#999;padding:6px 0'>Thời gian</td>
+                  <td style='text-align:right'>" . date('H:i d/m/Y') . "</td></tr>
+            </table>
+            <div style='text-align:center;margin:28px 0'>
+              <div style='display:inline-block;background:#ffffff;padding:14px;border-radius:12px;border:3px solid #e0e0e0'>
+                <img src='" . $qrDataUri . "' alt='QR Code' width='180' height='180'
+                     style='display:block;width:180px;height:180px'/>
+              </div>
+              <p style='color:#aaa;font-size:13px;margin-top:12px'>Xuất trình mã QR này tại quầy MiniCine để nhận hàng</p>
+              <p style='color:#888;font-size:11px;font-family:monospace;margin-top:4px'>" . htmlspecialchars($order['code']) . "</p>
+            </div>
+        ");
+        $mail->send();
+        mailLog("OK sendShopOrderEmail to {$to} order {$order['code']}");
+        return true;
+    } catch (Exception $e) {
+        mailLog("FAIL sendShopOrderEmail to {$to}: " . $e->getMessage());
+        return false;
+    }
 }

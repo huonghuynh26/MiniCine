@@ -197,8 +197,49 @@ function confirmBooking(int $showId, array $seatIds, int $userId, int $pointsUse
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
         if (count($rows) !== count($seatIds)) {
+            // Hết held — thử force-hold lại nếu ghế vẫn chưa bị booked
             $db->rollback();
-            return ['ok' => false, 'msg' => 'Phiên giữ ghế đã hết hạn. Vui lòng chọn lại.'];
+            $db->begin_transaction();
+
+            $in2     = implode(',', array_fill(0, count($seatIds), '?'));
+            $types2b = str_repeat('i', count($seatIds) + 2);
+            $params2b = array_merge([$showId, $showId], $seatIds);
+            $chk = $db->prepare("
+                SELECT s.id as seat_id, s.type, COALESCE(ss.status,'available') as status
+                FROM tblSeats s
+                JOIN tblShows sh ON sh.room_id = s.room_id AND sh.id = ?
+                LEFT JOIN tblSeatStatus ss ON ss.seat_id = s.id AND ss.show_id = ?
+                WHERE s.id IN ($in2)
+            ");
+            $chk->bind_param($types2b, ...$params2b);
+            $chk->execute();
+            $statusRows = $chk->get_result()->fetch_all(MYSQLI_ASSOC);
+
+            foreach ($statusRows as $sr) {
+                if ($sr['status'] === 'booked') {
+                    $db->rollback();
+                    return ['ok' => false, 'msg' => 'Ghế đã được người khác đặt. Vui lòng chọn ghế khác.'];
+                }
+                // available hoặc held-expired → force-hold lại để có thể confirm
+                $upsert = $db->prepare("
+                    INSERT INTO tblSeatStatus (show_id, seat_id, status, held_by, held_until, version_number)
+                    VALUES (?, ?, 'held', ?, DATE_ADD(NOW(), INTERVAL 2 MINUTE), 1)
+                    ON DUPLICATE KEY UPDATE
+                        status='held', held_by=VALUES(held_by),
+                        held_until=VALUES(held_until),
+                        version_number=version_number+1
+                ");
+                $upsert->bind_param('iii', $showId, $sr['seat_id'], $userId);
+                $upsert->execute();
+            }
+
+            // Re-query sau force-hold
+            $stmt->execute();
+            $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            if (count($rows) !== count($seatIds)) {
+                $db->rollback();
+                return ['ok' => false, 'msg' => 'Không thể xác nhận ghế. Vui lòng thử lại.'];
+            }
         }
 
         // Get flash sale discount
