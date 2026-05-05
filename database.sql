@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: May 04, 2026 at 08:40 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- Máy chủ: 127.0.0.1
+-- Thời gian đã tạo: Th5 06, 2026 lúc 01:44 AM
+-- Phiên bản máy phục vụ: 10.4.32-MariaDB
+-- Phiên bản PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,13 +18,13 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `minicine`
+-- Cơ sở dữ liệu: `minicine`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblbookingitems`
+-- Cấu trúc bảng cho bảng `tblbookingitems`
 --
 
 CREATE TABLE `tblbookingitems` (
@@ -38,7 +38,7 @@ CREATE TABLE `tblbookingitems` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblbookingitems`
+-- Đang đổ dữ liệu cho bảng `tblbookingitems`
 --
 
 INSERT INTO `tblbookingitems` (`id`, `booking_id`, `seat_id`, `price`, `original_price`, `flash_sale_applied`, `discount_pct`) VALUES
@@ -96,13 +96,26 @@ INSERT INTO `tblbookingitems` (`id`, `booking_id`, `seat_id`, `price`, `original
 (52, 13, 36, 65000, 130000, 1, 50),
 (53, 13, 37, 65000, 130000, 1, 50),
 (54, 13, 38, 65000, 130000, 1, 50),
-(55, 14, 124, 65000, 130000, 1, 50),
-(56, 14, 125, 65000, 130000, 1, 50);
+(60, 18, 14, 45000, 90000, 1, 50),
+(61, 19, 15, 45000, 90000, 1, 50),
+(62, 20, 3, 45000, 90000, 1, 50),
+(63, 21, 30, 65000, 130000, 1, 50),
+(64, 22, 29, 65000, 130000, 1, 50),
+(65, 23, 59, 45000, 90000, 1, 50),
+(66, 23, 60, 45000, 90000, 1, 50),
+(67, 24, 58, 45000, 90000, 1, 50),
+(68, 25, 88, 65000, 130000, 1, 50),
+(69, 25, 89, 65000, 130000, 1, 50),
+(70, 25, 102, 200000, 200000, 0, 0),
+(71, 26, 80, 65000, 130000, 1, 50),
+(72, 26, 81, 65000, 130000, 1, 50),
+(73, 27, 60, 63000, 90000, 1, 30),
+(74, 28, 59, 63000, 90000, 1, 30);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblbookings`
+-- Cấu trúc bảng cho bảng `tblbookings`
 --
 
 CREATE TABLE `tblbookings` (
@@ -116,7 +129,7 @@ CREATE TABLE `tblbookings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblbookings`
+-- Đang đổ dữ liệu cho bảng `tblbookings`
 --
 
 INSERT INTO `tblbookings` (`id`, `user_id`, `show_id`, `total_price`, `payment_status`, `qr_code`, `created_at`) VALUES
@@ -133,12 +146,22 @@ INSERT INTO `tblbookings` (`id`, `user_id`, `show_id`, `total_price`, `payment_s
 (11, 3, 3, 480000, 'paid', 'MC-EC35E90D1EF1', '2026-04-30 14:48:28'),
 (12, 4, 4, 553000, 'paid', 'MC-605622711FA7', '2026-05-04 13:01:53'),
 (13, 3, 4, 305000, 'paid', 'MC-C4C78AB9749D', '2026-05-04 13:38:09'),
-(14, 4, 6, 130000, 'paid', 'MC-C96E492773F4', '2026-05-04 13:39:21');
+(18, 1, 9, 45000, 'paid', 'MC-77550E129804', '2026-05-05 13:26:26'),
+(19, 1, 9, 45000, 'paid', 'MC-DD08F94DA157', '2026-05-05 13:35:20'),
+(20, 5, 9, 45000, 'paid', 'MC-96559C40E3B0', '2026-05-05 14:00:50'),
+(21, 1, 9, 65000, 'paid', 'MC-DAEBCFDA33CF', '2026-05-05 14:06:44'),
+(22, 5, 9, 65000, 'paid', 'MC-4A2CBE4E68AE', '2026-05-05 14:14:59'),
+(23, 5, 10, 90000, 'paid', 'MC-AC9847169659', '2026-05-05 14:21:05'),
+(24, 5, 10, 45000, 'paid', 'MC-FBE53CD68A4A', '2026-05-05 14:31:57'),
+(25, 1, 10, 330000, 'paid', 'MC-5589965DA49C', '2026-05-05 14:42:40'),
+(26, 5, 10, 130000, 'paid', 'MC-5397746BA107', '2026-05-05 14:43:56'),
+(27, 5, 12, 53000, 'paid', 'MC-5A49C9C31831', '2026-05-05 21:38:29'),
+(28, 5, 12, 63000, 'paid', 'MC-3859D2E9C35E', '2026-05-05 21:45:58');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblflashsales`
+-- Cấu trúc bảng cho bảng `tblflashsales`
 --
 
 CREATE TABLE `tblflashsales` (
@@ -150,21 +173,27 @@ CREATE TABLE `tblflashsales` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblflashsales`
+-- Đang đổ dữ liệu cho bảng `tblflashsales`
 --
 
 INSERT INTO `tblflashsales` (`id`, `show_id`, `discount_pct`, `trigger_type`, `is_active`) VALUES
 (2, 4, 30, 'pre2h', 1),
-(4, 5, 30, 'pre2h', 1),
-(6, 6, 30, 'pre2h', 1),
 (8, 4, 50, 'post15m', 1),
-(9, 5, 50, 'post15m', 1),
-(10, 6, 50, 'post15m', 1);
+(14, 8, 30, 'pre2h', 1),
+(15, 8, 50, 'post15m', 1),
+(16, 9, 30, 'pre2h', 1),
+(17, 9, 50, 'post15m', 1),
+(18, 10, 30, 'pre2h', 1),
+(19, 10, 50, 'post15m', 1),
+(20, 11, 30, 'pre2h', 1),
+(21, 11, 50, 'post15m', 1),
+(22, 12, 30, 'pre2h', 1),
+(23, 12, 50, 'post15m', 1);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblmovies`
+-- Cấu trúc bảng cho bảng `tblmovies`
 --
 
 CREATE TABLE `tblmovies` (
@@ -176,22 +205,28 @@ CREATE TABLE `tblmovies` (
   `poster_url` varchar(255) DEFAULT NULL,
   `trailer_url` varchar(255) DEFAULT NULL,
   `status` enum('showing','upcoming','ended') NOT NULL DEFAULT 'upcoming',
+  `age_rating` enum('P','T13','T16','T18') NOT NULL DEFAULT 'P',
+  `avg_rating` decimal(3,1) NOT NULL DEFAULT 0.0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblmovies`
+-- Đang đổ dữ liệu cho bảng `tblmovies`
 --
 
-INSERT INTO `tblmovies` (`id`, `title`, `description`, `genre`, `duration_min`, `poster_url`, `trailer_url`, `status`, `created_at`) VALUES
-(1, 'Avengers: Doomsday', 'Trận chiến cuối cùng của các siêu anh hùng', 'Hành động, Khoa học viễn tưởng', 150, 'poster_69e6fd213df56.webp', '', 'showing', '2026-04-21 10:42:13'),
-(3, 'Mission Impossible 8', 'Ethan Hunt trở lại với nhiệm vụ không thể', 'Hành động, Gián điệp', 140, NULL, '', 'showing', '2026-04-21 10:42:13'),
-(4, 'Frozen 2', 'Lạnh giá con tym', 'Hoạt hình', 120, 'poster_69e6fc43870ca.jpg', 'https://youtu.be/Zi4LMpSDccc?si=aHgYk_0LDqmIRF4M', 'showing', '2026-04-21 11:25:39');
+INSERT INTO `tblmovies` (`id`, `title`, `description`, `genre`, `duration_min`, `poster_url`, `trailer_url`, `status`, `age_rating`, `avg_rating`, `created_at`) VALUES
+(1, 'Avengers: Doomsday', 'Trận chiến cuối cùng của các siêu anh hùng', '', 150, 'poster_69e6fd213df56.webp', '', 'upcoming', 'P', 0.0, '2026-04-21 10:42:13'),
+(4, 'Frozen 2', 'Lạnh giá con trym', 'Kinh Dị, Tâm Lý, Âm Nhạc', 121, 'poster_69e6fc43870ca.jpg', 'https://youtu.be/Zi4LMpSDccc?si=aHgYk_0LDqmIRF4M', 'showing', 'T13', 5.5, '2026-04-21 11:25:39'),
+(8, 'Heo Năm Móng', 'Truyền thuyết Cô Năm Hợi được truyền miệng qua nhiều thế hệ, như một lời nhắc về sự tái sinh đầy nghiệt ngã: linh hồn chết oan hoặc mang nhiều nghiệp quả nên mắc kẹt trong thân xác loài vật, mang theo ký ức và oán lệnh chưa thể hóa giải. \r\n\r\nVà giữa những hoa văn Khmer cổ kính và ánh đỏ linh thiêng, Sa - nữ chính của Heo Năm Móng hiện lên như một linh hồn đang đứng giữa hai cõi, như thể hai số phận đang chồng lên nhau. Liệu Sa còn điều gì vướng mắc ở cõi trần? Hay chính cô là kẻ từng gây nên tội lỗi, để rồi phải gánh chịu nghiệp báo?', 'Kinh Dị', 103, 'poster_69f9bce35d63e.jpg', 'https://www.youtube.com/watch?v=V_p3qpDUuz4', 'upcoming', 'T18', 0.0, '2026-05-05 16:48:19'),
+(9, 'Trùm Sò', 'Ở Làng Sứa Đỏ - một ngôi làng nhỏ xa xôi heo hút, hạn hán triền miên, người dân ai cũng nghèo cũng khổ, chỉ riêng Trùm Sò là giàu nứt đố đổ vách. Ghét nỗi là gã sống không tình không nghĩa, chỉ biết đến tiền, tiền và tiền. Gã còn ki bo, bủn xỉn với cả chính bản thân mình: ăn không dám ăn, mặc không dám mặc, chẳng chơi chẳng yêu cũng chẳng chịu cưới ai. Ngoài bà mẹ già lú lẫn thì chớ hòng ai bòn được của gã một cắc nào.  \r\n\r\nMột ngày nọ, Trùm Sò bị mất số vàng lớn. Từ đây, cũng vì tiếc tiền mà Trùm Sò dần bị cuốn vào một vụ cướp kinh thiên động địa chưa từng có cùng với hai người bạn thuở nhỏ là góa phụ Thị Hến và lãng tử giang hồ Tôm Hùm.', 'Hài', 105, 'poster_69f9bf3497bd3.webp', 'https://www.youtube.com/watch?v=PaMk-Ahcwuk', 'showing', 'P', 0.0, '2026-05-05 16:58:12'),
+(10, 'Phí Phông: Quỷ Máu Rừng Thiêng', 'Chuyện phim theo chân hai anh em Còn (Kiều Minh Tuấn) và Dương (Đoàn Minh Anh) - hai pháp sự tập sự lên núi cứu người mẹ đang bị lời nguyền “Phí Phông” đánh gục. Cùng lúc đó, trong bản sâu cũng xảy ra nhiều cái chết ghê rợn. Mọi nghi ngờ đổ dồn về hai mẹ con Mon (Diệp Bảo Ngọc) và Lua (Nina Nutthacha Padovan), những người mang đặc tính y hệt “Phí Phông”: xinh đẹp, làn da trắng và chỉ di truyền từ mẹ sang con. Thế nhưng, vẫn còn những bí mật động trời bị chôn vùi trong chốn rừng thiêng nước độc, cuốn hai anh em Còn và Dương vào cuộc truy lùng “Phí Phông” không hồi kết.', 'Kinh Dị', 120, 'poster_69f9c0f8ca04b.jpg', 'https://www.youtube.com/watch?v=AFkKZXbzHdI', 'showing', 'T16', 6.0, '2026-05-05 17:05:44'),
+(11, 'Đại Tiệc Trăng Máu 8', 'Đại Tiệc Trăng Máu 8 theo chân một vị đạo diễn hay bị coi thường (Vân Sơn đóng) trong dự án thử thách nhất đời ông: thực hiện một bộ phim dài 35 phút chỉ với một cú máy. Hàng loạt tình huống dở khóc dở cười xảy ra khi các diễn viên liên tục gây chuyện “khó đỡ”. Thế nhưng, việc hoàn thành tác phẩm là cơ hội cuối cùng để ông giành lại sự tôn trọng từ cô con gái đam mê nghệ thuật. \r\n\r\nQuy tụ dàn sao đình đám nhất điện ảnh Việt, Đại Tiệc Trăng Máu 8 ấn định lịch khai tiệc vào 24.04.2026, chiếu xuyên Đại lễ Giỗ Tổ Hùng Vương & 30.04.', 'Hài, Kinh Dị, Tâm Lý', 130, 'poster_69f9c1e33a91e.jpg', 'https://www.youtube.com/watch?v=nNaAawAEW9I', 'upcoming', 'T16', 0.0, '2026-05-05 17:09:39'),
+(12, 'Anh Hùng', 'Câu chuyện phim theo chân Hùng (Thái Hòa) - người cha đơn thân kiêm tài xế taxi và đồng nghiệp hãng xe là Tuấn (Võ Tấn Phát) bị cuốn vào một phi vụ lừa đảo từ thiện tiền tỉ trong khi sinh mạng cô con gái nhỏ của anh đang nằm gọn trong tay tử thần.', 'Tâm Lý, Gia Đình', 122, 'poster_69f9c39fa11f2.webp', 'https://www.youtube.com/watch?v=9fgmlmYme18', 'showing', 'T13', 0.0, '2026-05-05 17:17:03');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblpointslog`
+-- Cấu trúc bảng cho bảng `tblpointslog`
 --
 
 CREATE TABLE `tblpointslog` (
@@ -204,7 +239,7 @@ CREATE TABLE `tblpointslog` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblpointslog`
+-- Đang đổ dữ liệu cho bảng `tblpointslog`
 --
 
 INSERT INTO `tblpointslog` (`id`, `user_id`, `booking_id`, `points_delta`, `reason`, `created_at`) VALUES
@@ -262,13 +297,33 @@ INSERT INTO `tblpointslog` (`id`, `user_id`, `booking_id`, `points_delta`, `reas
 (52, 3, 13, 35, 'Đặt ghế vip - Booking #13', '2026-05-04 13:38:09'),
 (53, 3, 13, 35, 'Đặt ghế vip - Booking #13', '2026-05-04 13:38:09'),
 (54, 3, 13, 35, 'Đặt ghế vip - Booking #13', '2026-05-04 13:38:09'),
-(55, 4, 14, 35, 'Đặt ghế vip - Booking #14', '2026-05-04 13:39:21'),
-(56, 4, 14, 35, 'Đặt ghế vip - Booking #14', '2026-05-04 13:39:21');
+(55, 4, NULL, 35, 'Đặt ghế vip - Booking #14', '2026-05-04 13:39:21'),
+(56, 4, NULL, 35, 'Đặt ghế vip - Booking #14', '2026-05-04 13:39:21'),
+(57, 3, NULL, 35, 'Đặt ghế vip - Booking #15', '2026-05-05 10:54:16'),
+(58, 3, NULL, -600, 'Đổi điểm giảm giá - Booking #15', '2026-05-05 10:54:16'),
+(59, 4, NULL, 20, 'Đặt ghế couple - Booking #16', '2026-05-05 10:58:15'),
+(60, 4, NULL, 20, 'Đặt ghế couple - Booking #17', '2026-05-05 11:00:08'),
+(61, 1, 18, 10, 'Đặt ghế standard - Booking #18', '2026-05-05 13:26:26'),
+(62, 1, 19, 10, 'Đặt ghế standard - Booking #19', '2026-05-05 13:35:20'),
+(63, 5, 20, 10, 'Đặt ghế standard - Booking #20', '2026-05-05 14:00:50'),
+(64, 1, 21, 35, 'Đặt ghế vip - Booking #21', '2026-05-05 14:06:44'),
+(65, 5, 22, 35, 'Đặt ghế vip - Booking #22', '2026-05-05 14:14:59'),
+(66, 5, 23, 10, 'Đặt ghế standard - Booking #23', '2026-05-05 14:21:05'),
+(67, 5, 23, 10, 'Đặt ghế standard - Booking #23', '2026-05-05 14:21:05'),
+(68, 5, 24, 10, 'Đặt ghế standard - Booking #24', '2026-05-05 14:31:57'),
+(69, 1, 25, 35, 'Đặt ghế vip - Booking #25', '2026-05-05 14:42:40'),
+(70, 1, 25, 35, 'Đặt ghế vip - Booking #25', '2026-05-05 14:42:40'),
+(71, 1, 25, 20, 'Đặt ghế couple - Booking #25', '2026-05-05 14:42:40'),
+(72, 5, 26, 35, 'Đặt ghế vip - Booking #26', '2026-05-05 14:43:56'),
+(73, 5, 26, 35, 'Đặt ghế vip - Booking #26', '2026-05-05 14:43:56'),
+(74, 5, 27, 10, 'Đặt ghế standard - Booking #27', '2026-05-05 21:38:29'),
+(75, 5, 27, -100, 'Đổi điểm giảm giá - Booking #27', '2026-05-05 21:38:29'),
+(76, 5, 28, 10, 'Đặt ghế standard - Booking #28', '2026-05-05 21:45:58');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblprices`
+-- Cấu trúc bảng cho bảng `tblprices`
 --
 
 CREATE TABLE `tblprices` (
@@ -278,7 +333,7 @@ CREATE TABLE `tblprices` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblprices`
+-- Đang đổ dữ liệu cho bảng `tblprices`
 --
 
 INSERT INTO `tblprices` (`id`, `seat_type`, `price`) VALUES
@@ -289,7 +344,30 @@ INSERT INTO `tblprices` (`id`, `seat_type`, `price`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblrooms`
+-- Cấu trúc bảng cho bảng `tblratings`
+--
+
+CREATE TABLE `tblratings` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `movie_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `rating` tinyint(2) UNSIGNED NOT NULL DEFAULT 5,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `tblratings`
+--
+
+INSERT INTO `tblratings` (`id`, `movie_id`, `user_id`, `rating`, `created_at`) VALUES
+(1, 4, 1, 10, '2026-05-05 16:29:47'),
+(2, 4, 5, 1, '2026-05-05 16:31:54'),
+(3, 10, 1, 6, '2026-05-05 17:36:47');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `tblrooms`
 --
 
 CREATE TABLE `tblrooms` (
@@ -299,7 +377,7 @@ CREATE TABLE `tblrooms` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblrooms`
+-- Đang đổ dữ liệu cho bảng `tblrooms`
 --
 
 INSERT INTO `tblrooms` (`id`, `floor`, `name`) VALUES
@@ -310,7 +388,7 @@ INSERT INTO `tblrooms` (`id`, `floor`, `name`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblseats`
+-- Cấu trúc bảng cho bảng `tblseats`
 --
 
 CREATE TABLE `tblseats` (
@@ -322,7 +400,7 @@ CREATE TABLE `tblseats` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblseats`
+-- Đang đổ dữ liệu cho bảng `tblseats`
 --
 
 INSERT INTO `tblseats` (`id`, `room_id`, `row`, `number`, `type`) VALUES
@@ -486,7 +564,7 @@ INSERT INTO `tblseats` (`id`, `room_id`, `row`, `number`, `type`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblseatstatus`
+-- Cấu trúc bảng cho bảng `tblseatstatus`
 --
 
 CREATE TABLE `tblseatstatus` (
@@ -500,7 +578,7 @@ CREATE TABLE `tblseatstatus` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblseatstatus`
+-- Đang đổ dữ liệu cho bảng `tblseatstatus`
 --
 
 INSERT INTO `tblseatstatus` (`id`, `show_id`, `seat_id`, `status`, `version_number`, `held_until`, `held_by`) VALUES
@@ -712,58 +790,6 @@ INSERT INTO `tblseatstatus` (`id`, `show_id`, `seat_id`, `status`, `version_numb
 (217, 4, 102, 'available', 0, NULL, NULL),
 (218, 4, 103, 'available', 0, NULL, NULL),
 (219, 4, 104, 'available', 0, NULL, NULL),
-(231, 5, 53, 'available', 0, NULL, NULL),
-(232, 5, 54, 'available', 0, NULL, NULL),
-(233, 5, 55, 'available', 0, NULL, NULL),
-(234, 5, 56, 'available', 0, NULL, NULL),
-(235, 5, 57, 'available', 0, NULL, NULL),
-(236, 5, 58, 'available', 0, NULL, NULL),
-(237, 5, 59, 'available', 0, NULL, NULL),
-(238, 5, 60, 'available', 0, NULL, NULL),
-(239, 5, 61, 'available', 0, NULL, NULL),
-(240, 5, 62, 'available', 0, NULL, NULL),
-(241, 5, 63, 'available', 0, NULL, NULL),
-(242, 5, 64, 'available', 0, NULL, NULL),
-(243, 5, 65, 'available', 0, NULL, NULL),
-(244, 5, 66, 'available', 0, NULL, NULL),
-(245, 5, 67, 'available', 0, NULL, NULL),
-(246, 5, 68, 'available', 0, NULL, NULL),
-(247, 5, 69, 'available', 0, NULL, NULL),
-(248, 5, 70, 'available', 0, NULL, NULL),
-(249, 5, 71, 'available', 0, NULL, NULL),
-(250, 5, 72, 'available', 0, NULL, NULL),
-(251, 5, 73, 'available', 0, NULL, NULL),
-(252, 5, 74, 'available', 0, NULL, NULL),
-(253, 5, 75, 'available', 0, NULL, NULL),
-(254, 5, 76, 'available', 0, NULL, NULL),
-(255, 5, 77, 'available', 0, NULL, NULL),
-(256, 5, 78, 'available', 0, NULL, NULL),
-(257, 5, 79, 'available', 0, NULL, NULL),
-(258, 5, 80, 'available', 0, NULL, NULL),
-(259, 5, 81, 'available', 0, NULL, NULL),
-(260, 5, 82, 'available', 0, NULL, NULL),
-(261, 5, 83, 'available', 0, NULL, NULL),
-(262, 5, 84, 'available', 0, NULL, NULL),
-(263, 5, 85, 'available', 0, NULL, NULL),
-(264, 5, 86, 'available', 0, NULL, NULL),
-(265, 5, 87, 'available', 0, NULL, NULL),
-(266, 5, 88, 'available', 0, NULL, NULL),
-(267, 5, 89, 'available', 0, NULL, NULL),
-(268, 5, 90, 'available', 0, NULL, NULL),
-(269, 5, 91, 'available', 0, NULL, NULL),
-(270, 5, 92, 'available', 0, NULL, NULL),
-(271, 5, 93, 'available', 0, NULL, NULL),
-(272, 5, 94, 'available', 0, NULL, NULL),
-(273, 5, 95, 'available', 0, NULL, NULL),
-(274, 5, 96, 'available', 0, NULL, NULL),
-(275, 5, 97, 'available', 0, NULL, NULL),
-(276, 5, 98, 'available', 0, NULL, NULL),
-(277, 5, 99, 'available', 0, NULL, NULL),
-(278, 5, 100, 'available', 0, NULL, NULL),
-(279, 5, 101, 'available', 0, NULL, NULL),
-(280, 5, 102, 'available', 0, NULL, NULL),
-(281, 5, 103, 'available', 0, NULL, NULL),
-(282, 5, 104, 'available', 0, NULL, NULL),
 (294, 4, 34, 'booked', 3, NULL, NULL),
 (295, 4, 44, 'available', 2, NULL, NULL),
 (296, 4, 35, 'booked', 5, NULL, NULL),
@@ -773,58 +799,6 @@ INSERT INTO `tblseatstatus` (`id`, `show_id`, `seat_id`, `status`, `version_numb
 (300, 4, 36, 'booked', 3, NULL, NULL),
 (301, 4, 27, 'available', 10, NULL, NULL),
 (302, 4, 28, 'available', 8, NULL, NULL),
-(303, 6, 105, 'available', 0, NULL, NULL),
-(304, 6, 106, 'available', 0, NULL, NULL),
-(305, 6, 107, 'available', 0, NULL, NULL),
-(306, 6, 108, 'available', 0, NULL, NULL),
-(307, 6, 109, 'available', 0, NULL, NULL),
-(308, 6, 110, 'available', 0, NULL, NULL),
-(309, 6, 111, 'available', 0, NULL, NULL),
-(310, 6, 112, 'available', 0, NULL, NULL),
-(311, 6, 113, 'available', 0, NULL, NULL),
-(312, 6, 114, 'available', 0, NULL, NULL),
-(313, 6, 115, 'available', 0, NULL, NULL),
-(314, 6, 116, 'available', 0, NULL, NULL),
-(315, 6, 117, 'available', 0, NULL, NULL),
-(316, 6, 118, 'available', 0, NULL, NULL),
-(317, 6, 119, 'available', 0, NULL, NULL),
-(318, 6, 120, 'available', 0, NULL, NULL),
-(319, 6, 121, 'available', 0, NULL, NULL),
-(320, 6, 122, 'available', 0, NULL, NULL),
-(321, 6, 123, 'available', 0, NULL, NULL),
-(322, 6, 124, 'booked', 1, NULL, NULL),
-(323, 6, 125, 'booked', 1, NULL, NULL),
-(324, 6, 126, 'available', 0, NULL, NULL),
-(325, 6, 127, 'available', 0, NULL, NULL),
-(326, 6, 128, 'available', 0, NULL, NULL),
-(327, 6, 129, 'available', 0, NULL, NULL),
-(328, 6, 130, 'available', 0, NULL, NULL),
-(329, 6, 131, 'available', 0, NULL, NULL),
-(330, 6, 132, 'available', 0, NULL, NULL),
-(331, 6, 133, 'available', 0, NULL, NULL),
-(332, 6, 134, 'available', 0, NULL, NULL),
-(333, 6, 135, 'available', 0, NULL, NULL),
-(334, 6, 136, 'available', 0, NULL, NULL),
-(335, 6, 137, 'available', 0, NULL, NULL),
-(336, 6, 138, 'available', 0, NULL, NULL),
-(337, 6, 139, 'available', 2, NULL, NULL),
-(338, 6, 140, 'available', 0, NULL, NULL),
-(339, 6, 141, 'available', 0, NULL, NULL),
-(340, 6, 142, 'available', 0, NULL, NULL),
-(341, 6, 143, 'available', 0, NULL, NULL),
-(342, 6, 144, 'available', 0, NULL, NULL),
-(343, 6, 145, 'available', 0, NULL, NULL),
-(344, 6, 146, 'available', 0, NULL, NULL),
-(345, 6, 147, 'available', 0, NULL, NULL),
-(346, 6, 148, 'available', 0, NULL, NULL),
-(347, 6, 149, 'available', 0, NULL, NULL),
-(348, 6, 150, 'available', 0, NULL, NULL),
-(349, 6, 151, 'available', 0, NULL, NULL),
-(350, 6, 152, 'available', 0, NULL, NULL),
-(351, 6, 153, 'available', 0, NULL, NULL),
-(352, 6, 154, 'available', 0, NULL, NULL),
-(353, 6, 155, 'available', 0, NULL, NULL),
-(354, 6, 156, 'available', 0, NULL, NULL),
 (366, 4, 10, 'available', 2, NULL, NULL),
 (367, 4, 5, 'available', 2, NULL, NULL),
 (368, 4, 37, 'booked', 1, NULL, NULL),
@@ -833,12 +807,272 @@ INSERT INTO `tblseatstatus` (`id`, `show_id`, `seat_id`, `status`, `version_numb
 (371, 4, 26, 'available', 4, NULL, NULL),
 (372, 4, 29, 'available', 4, NULL, NULL),
 (373, 4, 30, 'available', 4, NULL, NULL),
-(374, 4, 31, 'available', 4, NULL, NULL);
+(374, 4, 31, 'available', 4, NULL, NULL),
+(438, 8, 1, 'available', 0, NULL, NULL),
+(439, 8, 2, 'available', 0, NULL, NULL),
+(440, 8, 3, 'available', 0, NULL, NULL),
+(441, 8, 4, 'available', 0, NULL, NULL),
+(442, 8, 5, 'available', 0, NULL, NULL),
+(443, 8, 6, 'available', 0, NULL, NULL),
+(444, 8, 7, 'available', 0, NULL, NULL),
+(445, 8, 8, 'available', 0, NULL, NULL),
+(446, 8, 9, 'available', 0, NULL, NULL),
+(447, 8, 10, 'available', 0, NULL, NULL),
+(448, 8, 11, 'available', 0, NULL, NULL),
+(449, 8, 12, 'available', 0, NULL, NULL),
+(450, 8, 13, 'available', 0, NULL, NULL),
+(451, 8, 14, 'available', 0, NULL, NULL),
+(452, 8, 15, 'available', 0, NULL, NULL),
+(453, 8, 16, 'available', 0, NULL, NULL),
+(454, 8, 17, 'available', 0, NULL, NULL),
+(455, 8, 18, 'available', 0, NULL, NULL),
+(456, 8, 19, 'available', 0, NULL, NULL),
+(457, 8, 20, 'available', 0, NULL, NULL),
+(458, 8, 21, 'available', 0, NULL, NULL),
+(459, 8, 22, 'available', 0, NULL, NULL),
+(460, 8, 23, 'available', 0, NULL, NULL),
+(461, 8, 24, 'available', 0, NULL, NULL),
+(462, 8, 25, 'available', 0, NULL, NULL),
+(463, 8, 26, 'available', 0, NULL, NULL),
+(464, 8, 27, 'available', 0, NULL, NULL),
+(465, 8, 28, 'available', 0, NULL, NULL),
+(466, 8, 29, 'available', 0, NULL, NULL),
+(467, 8, 30, 'available', 0, NULL, NULL),
+(468, 8, 31, 'available', 0, NULL, NULL),
+(469, 8, 32, 'available', 0, NULL, NULL),
+(470, 8, 33, 'available', 0, NULL, NULL),
+(471, 8, 34, 'available', 0, NULL, NULL),
+(472, 8, 35, 'available', 0, NULL, NULL),
+(473, 8, 36, 'available', 0, NULL, NULL),
+(474, 8, 37, 'available', 0, NULL, NULL),
+(475, 8, 38, 'available', 0, NULL, NULL),
+(476, 8, 39, 'available', 0, NULL, NULL),
+(477, 8, 40, 'available', 0, NULL, NULL),
+(478, 8, 41, 'available', 0, NULL, NULL),
+(479, 8, 42, 'available', 0, NULL, NULL),
+(480, 8, 43, 'available', 0, NULL, NULL),
+(481, 8, 44, 'available', 0, NULL, NULL),
+(482, 8, 45, 'available', 0, NULL, NULL),
+(483, 8, 46, 'available', 0, NULL, NULL),
+(484, 8, 47, 'available', 0, NULL, NULL),
+(485, 8, 48, 'available', 0, NULL, NULL),
+(486, 8, 49, 'available', 0, NULL, NULL),
+(487, 8, 50, 'available', 0, NULL, NULL),
+(488, 8, 51, 'available', 0, NULL, NULL),
+(489, 8, 52, 'available', 0, NULL, NULL),
+(501, 9, 1, 'available', 0, NULL, NULL),
+(502, 9, 2, 'available', 0, NULL, NULL),
+(503, 9, 3, 'booked', 3, NULL, NULL),
+(504, 9, 4, 'available', 0, NULL, NULL),
+(505, 9, 5, 'available', 0, NULL, NULL),
+(506, 9, 6, 'available', 0, NULL, NULL),
+(507, 9, 7, 'available', 0, NULL, NULL),
+(508, 9, 8, 'available', 2, NULL, NULL),
+(509, 9, 9, 'available', 0, NULL, NULL),
+(510, 9, 10, 'available', 0, NULL, NULL),
+(511, 9, 11, 'available', 0, NULL, NULL),
+(512, 9, 12, 'available', 2, NULL, NULL),
+(513, 9, 13, 'available', 4, NULL, NULL),
+(514, 9, 14, 'booked', 1, NULL, NULL),
+(515, 9, 15, 'booked', 1, NULL, NULL),
+(516, 9, 16, 'available', 2, NULL, NULL),
+(517, 9, 17, 'available', 0, NULL, NULL),
+(518, 9, 18, 'available', 0, NULL, NULL),
+(519, 9, 19, 'available', 0, NULL, NULL),
+(520, 9, 20, 'available', 0, NULL, NULL),
+(521, 9, 21, 'available', 2, NULL, NULL),
+(522, 9, 22, 'available', 6, NULL, NULL),
+(523, 9, 23, 'available', 0, NULL, NULL),
+(524, 9, 24, 'available', 0, NULL, NULL),
+(525, 9, 25, 'available', 0, NULL, NULL),
+(526, 9, 26, 'available', 0, NULL, NULL),
+(527, 9, 27, 'available', 2, NULL, NULL),
+(528, 9, 28, 'available', 2, NULL, NULL),
+(529, 9, 29, 'booked', 3, NULL, NULL),
+(530, 9, 30, 'booked', 1, NULL, NULL),
+(531, 9, 31, 'available', 0, NULL, NULL),
+(532, 9, 32, 'available', 0, NULL, NULL),
+(533, 9, 33, 'available', 0, NULL, NULL),
+(534, 9, 34, 'available', 2, NULL, NULL),
+(535, 9, 35, 'available', 2, NULL, NULL),
+(536, 9, 36, 'available', 4, NULL, NULL),
+(537, 9, 37, 'available', 2, NULL, NULL),
+(538, 9, 38, 'available', 4, NULL, NULL),
+(539, 9, 39, 'available', 0, NULL, NULL),
+(540, 9, 40, 'available', 0, NULL, NULL),
+(541, 9, 41, 'available', 0, NULL, NULL),
+(542, 9, 42, 'available', 0, NULL, NULL),
+(543, 9, 43, 'available', 0, NULL, NULL),
+(544, 9, 44, 'available', 0, NULL, NULL),
+(545, 9, 45, 'available', 0, NULL, NULL),
+(546, 9, 46, 'available', 0, NULL, NULL),
+(547, 9, 47, 'available', 0, NULL, NULL),
+(548, 9, 48, 'available', 0, NULL, NULL),
+(549, 9, 49, 'available', 0, NULL, NULL),
+(550, 9, 50, 'available', 0, NULL, NULL),
+(551, 9, 51, 'available', 0, NULL, NULL),
+(552, 9, 52, 'available', 0, NULL, NULL),
+(564, 10, 53, 'available', 0, NULL, NULL),
+(565, 10, 54, 'available', 0, NULL, NULL),
+(566, 10, 55, 'available', 2, NULL, NULL),
+(567, 10, 56, 'available', 4, NULL, NULL),
+(568, 10, 57, 'available', 2, NULL, NULL),
+(569, 10, 58, 'booked', 3, NULL, NULL),
+(570, 10, 59, 'booked', 1, NULL, NULL),
+(571, 10, 60, 'booked', 7, NULL, NULL),
+(572, 10, 61, 'available', 0, NULL, NULL),
+(573, 10, 62, 'available', 0, NULL, NULL),
+(574, 10, 63, 'available', 0, NULL, NULL),
+(575, 10, 64, 'available', 0, NULL, NULL),
+(576, 10, 65, 'available', 0, NULL, NULL),
+(577, 10, 66, 'available', 2, NULL, NULL),
+(578, 10, 67, 'available', 4, NULL, NULL),
+(579, 10, 68, 'available', 2, NULL, NULL),
+(580, 10, 69, 'available', 0, NULL, NULL),
+(581, 10, 70, 'available', 0, NULL, NULL),
+(582, 10, 71, 'available', 2, NULL, NULL),
+(583, 10, 72, 'available', 2, NULL, NULL),
+(584, 10, 73, 'available', 6, NULL, NULL),
+(585, 10, 74, 'available', 2, NULL, NULL),
+(586, 10, 75, 'available', 0, NULL, NULL),
+(587, 10, 76, 'available', 0, NULL, NULL),
+(588, 10, 77, 'available', 0, NULL, NULL),
+(589, 10, 78, 'available', 4, NULL, NULL),
+(590, 10, 79, 'available', 4, NULL, NULL),
+(591, 10, 80, 'booked', 7, NULL, NULL),
+(592, 10, 81, 'booked', 7, NULL, NULL),
+(593, 10, 82, 'available', 4, NULL, NULL),
+(594, 10, 83, 'available', 0, NULL, NULL),
+(595, 10, 84, 'available', 2, NULL, NULL),
+(596, 10, 85, 'available', 0, NULL, NULL),
+(597, 10, 86, 'available', 6, NULL, NULL),
+(598, 10, 87, 'available', 8, NULL, NULL),
+(599, 10, 88, 'booked', 9, NULL, NULL),
+(600, 10, 89, 'booked', 9, NULL, NULL),
+(601, 10, 90, 'available', 6, NULL, NULL),
+(602, 10, 91, 'available', 0, NULL, NULL),
+(603, 10, 92, 'available', 0, NULL, NULL),
+(604, 10, 93, 'available', 0, NULL, NULL),
+(605, 10, 94, 'available', 0, NULL, NULL),
+(606, 10, 95, 'available', 0, NULL, NULL),
+(607, 10, 96, 'available', 0, NULL, NULL),
+(608, 10, 97, 'available', 0, NULL, NULL),
+(609, 10, 98, 'available', 0, NULL, NULL),
+(610, 10, 99, 'available', 0, NULL, NULL),
+(611, 10, 100, 'available', 0, NULL, NULL),
+(612, 10, 101, 'available', 0, NULL, NULL),
+(613, 10, 102, 'booked', 5, NULL, NULL),
+(614, 10, 103, 'available', 0, NULL, NULL),
+(615, 10, 104, 'available', 0, NULL, NULL),
+(628, 11, 1, 'available', 0, NULL, NULL),
+(629, 11, 2, 'available', 0, NULL, NULL),
+(630, 11, 3, 'available', 0, NULL, NULL),
+(631, 11, 4, 'available', 0, NULL, NULL),
+(632, 11, 5, 'available', 0, NULL, NULL),
+(633, 11, 6, 'available', 0, NULL, NULL),
+(634, 11, 7, 'available', 0, NULL, NULL),
+(635, 11, 8, 'available', 0, NULL, NULL),
+(636, 11, 9, 'available', 0, NULL, NULL),
+(637, 11, 10, 'available', 0, NULL, NULL),
+(638, 11, 11, 'available', 0, NULL, NULL),
+(639, 11, 12, 'available', 0, NULL, NULL),
+(640, 11, 13, 'available', 0, NULL, NULL),
+(641, 11, 14, 'available', 0, NULL, NULL),
+(642, 11, 15, 'available', 0, NULL, NULL),
+(643, 11, 16, 'available', 0, NULL, NULL),
+(644, 11, 17, 'available', 0, NULL, NULL),
+(645, 11, 18, 'available', 0, NULL, NULL),
+(646, 11, 19, 'available', 0, NULL, NULL),
+(647, 11, 20, 'available', 0, NULL, NULL),
+(648, 11, 21, 'available', 0, NULL, NULL),
+(649, 11, 22, 'available', 0, NULL, NULL),
+(650, 11, 23, 'available', 0, NULL, NULL),
+(651, 11, 24, 'available', 0, NULL, NULL),
+(652, 11, 25, 'available', 0, NULL, NULL),
+(653, 11, 26, 'available', 0, NULL, NULL),
+(654, 11, 27, 'available', 0, NULL, NULL),
+(655, 11, 28, 'available', 0, NULL, NULL),
+(656, 11, 29, 'available', 0, NULL, NULL),
+(657, 11, 30, 'available', 0, NULL, NULL),
+(658, 11, 31, 'available', 0, NULL, NULL),
+(659, 11, 32, 'available', 0, NULL, NULL),
+(660, 11, 33, 'available', 0, NULL, NULL),
+(661, 11, 34, 'available', 0, NULL, NULL),
+(662, 11, 35, 'available', 0, NULL, NULL),
+(663, 11, 36, 'available', 0, NULL, NULL),
+(664, 11, 37, 'available', 0, NULL, NULL),
+(665, 11, 38, 'available', 0, NULL, NULL),
+(666, 11, 39, 'available', 0, NULL, NULL),
+(667, 11, 40, 'available', 0, NULL, NULL),
+(668, 11, 41, 'available', 0, NULL, NULL),
+(669, 11, 42, 'available', 0, NULL, NULL),
+(670, 11, 43, 'available', 0, NULL, NULL),
+(671, 11, 44, 'available', 0, NULL, NULL),
+(672, 11, 45, 'available', 0, NULL, NULL),
+(673, 11, 46, 'available', 0, NULL, NULL),
+(674, 11, 47, 'available', 0, NULL, NULL),
+(675, 11, 48, 'available', 0, NULL, NULL),
+(676, 11, 49, 'available', 0, NULL, NULL),
+(677, 11, 50, 'available', 0, NULL, NULL),
+(678, 11, 51, 'available', 0, NULL, NULL),
+(679, 11, 52, 'available', 0, NULL, NULL),
+(691, 12, 53, 'available', 0, NULL, NULL),
+(692, 12, 54, 'available', 0, NULL, NULL),
+(693, 12, 55, 'available', 0, NULL, NULL),
+(694, 12, 56, 'available', 0, NULL, NULL),
+(695, 12, 57, 'available', 0, NULL, NULL),
+(696, 12, 58, 'available', 0, NULL, NULL),
+(697, 12, 59, 'booked', 1, NULL, NULL),
+(698, 12, 60, 'booked', 3, NULL, NULL),
+(699, 12, 61, 'available', 0, NULL, NULL),
+(700, 12, 62, 'available', 0, NULL, NULL),
+(701, 12, 63, 'available', 0, NULL, NULL),
+(702, 12, 64, 'available', 0, NULL, NULL),
+(703, 12, 65, 'available', 0, NULL, NULL),
+(704, 12, 66, 'available', 0, NULL, NULL),
+(705, 12, 67, 'available', 0, NULL, NULL),
+(706, 12, 68, 'available', 0, NULL, NULL),
+(707, 12, 69, 'available', 0, NULL, NULL),
+(708, 12, 70, 'available', 0, NULL, NULL),
+(709, 12, 71, 'available', 0, NULL, NULL),
+(710, 12, 72, 'available', 0, NULL, NULL),
+(711, 12, 73, 'available', 0, NULL, NULL),
+(712, 12, 74, 'available', 0, NULL, NULL),
+(713, 12, 75, 'available', 0, NULL, NULL),
+(714, 12, 76, 'available', 0, NULL, NULL),
+(715, 12, 77, 'available', 0, NULL, NULL),
+(716, 12, 78, 'available', 0, NULL, NULL),
+(717, 12, 79, 'available', 0, NULL, NULL),
+(718, 12, 80, 'available', 0, NULL, NULL),
+(719, 12, 81, 'available', 0, NULL, NULL),
+(720, 12, 82, 'available', 0, NULL, NULL),
+(721, 12, 83, 'available', 0, NULL, NULL),
+(722, 12, 84, 'available', 0, NULL, NULL),
+(723, 12, 85, 'available', 0, NULL, NULL),
+(724, 12, 86, 'available', 0, NULL, NULL),
+(725, 12, 87, 'available', 0, NULL, NULL),
+(726, 12, 88, 'available', 0, NULL, NULL),
+(727, 12, 89, 'available', 0, NULL, NULL),
+(728, 12, 90, 'available', 0, NULL, NULL),
+(729, 12, 91, 'available', 0, NULL, NULL),
+(730, 12, 92, 'available', 0, NULL, NULL),
+(731, 12, 93, 'available', 0, NULL, NULL),
+(732, 12, 94, 'available', 0, NULL, NULL),
+(733, 12, 95, 'available', 0, NULL, NULL),
+(734, 12, 96, 'available', 0, NULL, NULL),
+(735, 12, 97, 'available', 0, NULL, NULL),
+(736, 12, 98, 'available', 0, NULL, NULL),
+(737, 12, 99, 'available', 0, NULL, NULL),
+(738, 12, 100, 'available', 0, NULL, NULL),
+(739, 12, 101, 'available', 0, NULL, NULL),
+(740, 12, 102, 'available', 0, NULL, NULL),
+(741, 12, 103, 'available', 0, NULL, NULL),
+(742, 12, 104, 'available', 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblshows`
+-- Cấu trúc bảng cho bảng `tblshows`
 --
 
 CREATE TABLE `tblshows` (
@@ -850,7 +1084,7 @@ CREATE TABLE `tblshows` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblshows`
+-- Đang đổ dữ liệu cho bảng `tblshows`
 --
 
 INSERT INTO `tblshows` (`id`, `movie_id`, `room_id`, `start_time`, `end_time`) VALUES
@@ -858,13 +1092,16 @@ INSERT INTO `tblshows` (`id`, `movie_id`, `room_id`, `start_time`, `end_time`) V
 (2, 4, 1, '2026-04-30 15:30:00', '2026-04-30 17:30:00'),
 (3, 1, 1, '2026-04-30 17:30:00', '2026-04-30 20:00:00'),
 (4, 4, 1, '2026-05-04 13:00:00', '2026-05-04 15:00:00'),
-(5, 3, 2, '2026-05-04 12:00:00', '2026-05-04 14:20:00'),
-(6, 3, 3, '2026-05-04 13:19:00', '2026-05-04 15:39:00');
+(8, 4, 1, '2026-05-05 00:54:00', '2026-05-05 02:55:00'),
+(9, 4, 1, '2026-05-05 12:53:00', '2026-05-05 14:54:00'),
+(10, 4, 2, '2026-05-05 14:00:00', '2026-05-05 16:01:00'),
+(11, 8, 1, '2026-05-05 22:00:00', '2026-05-05 23:43:00'),
+(12, 10, 2, '2026-05-05 22:00:00', '2026-05-06 00:00:00');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tblusers`
+-- Cấu trúc bảng cho bảng `tblusers`
 --
 
 CREATE TABLE `tblusers` (
@@ -882,20 +1119,21 @@ CREATE TABLE `tblusers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `tblusers`
+-- Đang đổ dữ liệu cho bảng `tblusers`
 --
 
 INSERT INTO `tblusers` (`id`, `email`, `password_hash`, `full_name`, `role`, `email_verified`, `verify_token`, `reset_token`, `reset_expires`, `total_points`, `created_at`) VALUES
-(1, 'admin@minicine.vn', '$2y$12$2M.duKrvcXSp4otbq53q8Oomfbnu9NXGlmiymIBFezMKuKRnrswtG', 'Quản trị viên', 'admin', 1, NULL, NULL, NULL, 0, '2026-04-21 10:42:12'),
-(3, 'huong.ngocc26@gmail.com', '$2y$10$Fq8dkZ8wwkZv1ZFQgfUvqetFxCBnEo7MPAlw2sQZPj1.vdNfNcjvC', 'Huynh Huong', 'customer', 1, NULL, NULL, NULL, 660, '2026-04-21 11:15:54'),
-(4, 'cavaca.2614@gmail.com', '$2y$10$v1EUdFmU1xcoDffAYDJFW.7dd4N89bvkod3O5sncZ.3gOuaxSdszu', 'Tuyết Nhung', 'customer', 1, NULL, NULL, NULL, 795, '2026-04-23 14:25:59');
+(1, 'admin@minicine.vn', '$2y$12$2M.duKrvcXSp4otbq53q8Oomfbnu9NXGlmiymIBFezMKuKRnrswtG', 'Quản trị viên', 'admin', 1, NULL, NULL, NULL, 145, '2026-04-21 10:42:12'),
+(3, 'huong.ngocc26@gmail.com', '$2y$10$Fq8dkZ8wwkZv1ZFQgfUvqetFxCBnEo7MPAlw2sQZPj1.vdNfNcjvC', 'Huynh Huong', 'customer', 1, NULL, NULL, NULL, 95, '2026-04-21 11:15:54'),
+(4, 'cavaca.2614@gmail.com', '$2y$10$v1EUdFmU1xcoDffAYDJFW.7dd4N89bvkod3O5sncZ.3gOuaxSdszu', 'Tuyết Nhung', 'customer', 1, NULL, NULL, NULL, 835, '2026-04-23 14:25:59'),
+(5, 'yunsootv@gmail.com', '$2y$10$Dy0EZbpzDSadrbnmkoTna.YlE7Zj7DHHuqNj79XDTTBDmOj1cexHS', 'BeNhun', 'customer', 1, NULL, NULL, NULL, 65, '2026-05-05 11:02:58');
 
 --
--- Indexes for dumped tables
+-- Chỉ mục cho các bảng đã đổ
 --
 
 --
--- Indexes for table `tblbookingitems`
+-- Chỉ mục cho bảng `tblbookingitems`
 --
 ALTER TABLE `tblbookingitems`
   ADD PRIMARY KEY (`id`),
@@ -903,7 +1141,7 @@ ALTER TABLE `tblbookingitems`
   ADD KEY `seat_id` (`seat_id`);
 
 --
--- Indexes for table `tblbookings`
+-- Chỉ mục cho bảng `tblbookings`
 --
 ALTER TABLE `tblbookings`
   ADD PRIMARY KEY (`id`),
@@ -911,20 +1149,20 @@ ALTER TABLE `tblbookings`
   ADD KEY `show_id` (`show_id`);
 
 --
--- Indexes for table `tblflashsales`
+-- Chỉ mục cho bảng `tblflashsales`
 --
 ALTER TABLE `tblflashsales`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_show_trigger` (`show_id`,`trigger_type`);
 
 --
--- Indexes for table `tblmovies`
+-- Chỉ mục cho bảng `tblmovies`
 --
 ALTER TABLE `tblmovies`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `tblpointslog`
+-- Chỉ mục cho bảng `tblpointslog`
 --
 ALTER TABLE `tblpointslog`
   ADD PRIMARY KEY (`id`),
@@ -932,27 +1170,34 @@ ALTER TABLE `tblpointslog`
   ADD KEY `booking_id` (`booking_id`);
 
 --
--- Indexes for table `tblprices`
+-- Chỉ mục cho bảng `tblprices`
 --
 ALTER TABLE `tblprices`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `seat_type` (`seat_type`);
 
 --
--- Indexes for table `tblrooms`
+-- Chỉ mục cho bảng `tblratings`
+--
+ALTER TABLE `tblratings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_movie_user` (`movie_id`,`user_id`);
+
+--
+-- Chỉ mục cho bảng `tblrooms`
 --
 ALTER TABLE `tblrooms`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `tblseats`
+-- Chỉ mục cho bảng `tblseats`
 --
 ALTER TABLE `tblseats`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_seat` (`room_id`,`row`,`number`);
 
 --
--- Indexes for table `tblseatstatus`
+-- Chỉ mục cho bảng `tblseatstatus`
 --
 ALTER TABLE `tblseatstatus`
   ADD PRIMARY KEY (`id`),
@@ -960,7 +1205,7 @@ ALTER TABLE `tblseatstatus`
   ADD KEY `seat_id` (`seat_id`);
 
 --
--- Indexes for table `tblshows`
+-- Chỉ mục cho bảng `tblshows`
 --
 ALTER TABLE `tblshows`
   ADD PRIMARY KEY (`id`),
@@ -968,128 +1213,134 @@ ALTER TABLE `tblshows`
   ADD KEY `room_id` (`room_id`);
 
 --
--- Indexes for table `tblusers`
+-- Chỉ mục cho bảng `tblusers`
 --
 ALTER TABLE `tblusers`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- AUTO_INCREMENT cho các bảng đã đổ
 --
 
 --
--- AUTO_INCREMENT for table `tblbookingitems`
+-- AUTO_INCREMENT cho bảng `tblbookingitems`
 --
 ALTER TABLE `tblbookingitems`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
--- AUTO_INCREMENT for table `tblbookings`
+-- AUTO_INCREMENT cho bảng `tblbookings`
 --
 ALTER TABLE `tblbookings`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
--- AUTO_INCREMENT for table `tblflashsales`
+-- AUTO_INCREMENT cho bảng `tblflashsales`
 --
 ALTER TABLE `tblflashsales`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
--- AUTO_INCREMENT for table `tblmovies`
+-- AUTO_INCREMENT cho bảng `tblmovies`
 --
 ALTER TABLE `tblmovies`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT for table `tblpointslog`
+-- AUTO_INCREMENT cho bảng `tblpointslog`
 --
 ALTER TABLE `tblpointslog`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
 
 --
--- AUTO_INCREMENT for table `tblprices`
+-- AUTO_INCREMENT cho bảng `tblprices`
 --
 ALTER TABLE `tblprices`
   MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `tblrooms`
+-- AUTO_INCREMENT cho bảng `tblratings`
+--
+ALTER TABLE `tblratings`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT cho bảng `tblrooms`
 --
 ALTER TABLE `tblrooms`
   MODIFY `id` tinyint(3) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `tblseats`
+-- AUTO_INCREMENT cho bảng `tblseats`
 --
 ALTER TABLE `tblseats`
   MODIFY `id` smallint(5) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=157;
 
 --
--- AUTO_INCREMENT for table `tblseatstatus`
+-- AUTO_INCREMENT cho bảng `tblseatstatus`
 --
 ALTER TABLE `tblseatstatus`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=375;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=754;
 
 --
--- AUTO_INCREMENT for table `tblshows`
+-- AUTO_INCREMENT cho bảng `tblshows`
 --
 ALTER TABLE `tblshows`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT for table `tblusers`
+-- AUTO_INCREMENT cho bảng `tblusers`
 --
 ALTER TABLE `tblusers`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- Constraints for dumped tables
+-- Các ràng buộc cho các bảng đã đổ
 --
 
 --
--- Constraints for table `tblbookingitems`
+-- Các ràng buộc cho bảng `tblbookingitems`
 --
 ALTER TABLE `tblbookingitems`
   ADD CONSTRAINT `tblbookingitems_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `tblbookings` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `tblbookingitems_ibfk_2` FOREIGN KEY (`seat_id`) REFERENCES `tblseats` (`id`);
 
 --
--- Constraints for table `tblbookings`
+-- Các ràng buộc cho bảng `tblbookings`
 --
 ALTER TABLE `tblbookings`
   ADD CONSTRAINT `tblbookings_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `tblusers` (`id`),
   ADD CONSTRAINT `tblbookings_ibfk_2` FOREIGN KEY (`show_id`) REFERENCES `tblshows` (`id`);
 
 --
--- Constraints for table `tblflashsales`
+-- Các ràng buộc cho bảng `tblflashsales`
 --
 ALTER TABLE `tblflashsales`
   ADD CONSTRAINT `tblflashsales_ibfk_1` FOREIGN KEY (`show_id`) REFERENCES `tblshows` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `tblpointslog`
+-- Các ràng buộc cho bảng `tblpointslog`
 --
 ALTER TABLE `tblpointslog`
   ADD CONSTRAINT `tblpointslog_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `tblusers` (`id`),
   ADD CONSTRAINT `tblpointslog_ibfk_2` FOREIGN KEY (`booking_id`) REFERENCES `tblbookings` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `tblseats`
+-- Các ràng buộc cho bảng `tblseats`
 --
 ALTER TABLE `tblseats`
   ADD CONSTRAINT `tblseats_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `tblrooms` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `tblseatstatus`
+-- Các ràng buộc cho bảng `tblseatstatus`
 --
 ALTER TABLE `tblseatstatus`
   ADD CONSTRAINT `tblseatstatus_ibfk_1` FOREIGN KEY (`show_id`) REFERENCES `tblshows` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `tblseatstatus_ibfk_2` FOREIGN KEY (`seat_id`) REFERENCES `tblseats` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `tblshows`
+-- Các ràng buộc cho bảng `tblshows`
 --
 ALTER TABLE `tblshows`
   ADD CONSTRAINT `tblshows_ibfk_1` FOREIGN KEY (`movie_id`) REFERENCES `tblmovies` (`id`) ON DELETE CASCADE,
