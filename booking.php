@@ -17,9 +17,13 @@ if ($showId && $step < 2) $step = 2;
 
 $show = null;
 if ($showId) {
+    // Check if age_rating column exists
+    $hasAgeCol = $db->query("SHOW COLUMNS FROM tblMovies LIKE 'age_rating'")->num_rows > 0;
+    $ageSelect = $hasAgeCol ? "m.age_rating," : "'P' as age_rating,";
+
     $stmt = $db->prepare("
         SELECT s.*, m.title as movie_title, m.duration_min, m.poster_url,
-               m.genre, m.age_rating, r.name as room_name, r.floor
+               m.genre, {$ageSelect} r.name as room_name, r.floor
         FROM tblShows s
         JOIN tblMovies m ON m.id = s.movie_id
         JOIN tblRooms  r ON r.id = s.room_id
@@ -655,7 +659,7 @@ function updateSummary(){
 function applyPoints(){const input=document.getElementById('points-input');let pts=Math.floor((parseInt(input.value)||0)/100)*100;const sub=Object.values(selected).reduce((s,x)=>{const b=PRICES[x.type]||0;const d=(currentFlashDisc>0&&x.type!=='couple')?currentFlashDisc:0;return s+Math.round(b*(1-d/100));},0);pts=Math.min(pts,USER_POINTS,Math.floor(sub/POINTS_VALUE)*POINTS_RATE);pts=Math.max(0,pts);input.value=pts;pointsUsed=pts;const disc=Math.floor(pts/POINTS_RATE)*POINTS_VALUE;document.getElementById('points-discount-display').textContent=pts>0?`✓ Giảm ${disc.toLocaleString()}đ (dùng ${pts.toLocaleString()} điểm)`:'';updateSummary();}
 function useAllPoints(){const sub=Object.values(selected).reduce((s,x)=>{const b=PRICES[x.type]||0;const d=(currentFlashDisc>0&&x.type!=='couple')?currentFlashDisc:0;return s+Math.round(b*(1-d/100));},0);const pts=Math.min(USER_POINTS,Math.floor(sub/POINTS_VALUE)*POINTS_RATE);document.getElementById('points-input').value=pts;pointsUsed=pts;const disc=Math.floor(pts/POINTS_RATE)*POINTS_VALUE;document.getElementById('points-discount-display').textContent=pts>0?`✓ Giảm ${disc.toLocaleString()}đ (dùng ${pts.toLocaleString()} điểm)`:'';updateSummary();}
 async function suggestSeats(){const n=parseInt(document.getElementById('suggest-n').value)||2;const res=await fetch(`${BASE_URL}/api/suggest.php?show_id=${SHOW_ID}&n=${n}`);const data=await res.json();if(!data.ok){showMsg(data.msg,'error');return;}if(data.fallback)showMsg(`Không đủ ${data.requested} ghế liền kề, gợi ý ${data.seats.length} ghế.`,'warning');const oldIds=Object.keys(selected).map(Number);selected={};if(oldIds.length){try{await fetch(`${BASE_URL}/api/release.php`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({show_id:SHOW_ID,seat_ids:oldIds})});}catch(e){}}const holdRes=await fetch(`${BASE_URL}/api/hold.php`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({show_id:SHOW_ID,seat_ids:data.seats.map(s=>s.id)})});const holdData=await holdRes.json();if(holdData.ok){data.seats.forEach(s=>{selected[s.id]=s;});startCountdown();}else{showMsg('Ghế gợi ý vừa bị người khác chọn.','error');}await loadSeats();}
-function startCountdown(){holdSeconds=5*60;document.getElementById('countdown-wrap').style.display='block';document.getElementById('countdown').classList.remove('urgent');if(holdTimer)clearInterval(holdTimer);holdTimer=setInterval(()=>{holdSeconds--;const m=Math.floor(holdSeconds/60),s=holdSeconds%60;document.getElementById('countdown-time').textContent=`${m}:${s.toString().padStart(2,'0')}`;if(holdSeconds<=60)document.getElementById('countdown').classList.add('urgent');if(holdSeconds<=0){clearInterval(holdTimer);document.getElementById('countdown-wrap').style.display='none';selected={};loadSeats();alert('⏱ Hết thời gian giữ ghế. Vui lòng chọn lại.');}},1000);}
+function startCountdown(){holdSeconds=5*60;const wrap=document.getElementById('countdown-wrap');const box=wrap.querySelector('.countdown');wrap.style.display='block';box.classList.remove('urgent');if(holdTimer)clearInterval(holdTimer);holdTimer=setInterval(()=>{holdSeconds--;const m=Math.floor(holdSeconds/60),s=holdSeconds%60;document.getElementById('countdown-time').textContent=`${m}:${s.toString().padStart(2,'0')}`;if(holdSeconds<=60)box.classList.add('urgent');if(holdSeconds<=0){clearInterval(holdTimer);wrap.style.display='none';selected={};loadSeats();alert('⏱ Hết thời gian giữ ghế. Vui lòng chọn lại.');}},1000);}
 
 async function onContinueClick(){
   const seatIds=Object.keys(selected).map(Number);if(!seatIds.length)return;
