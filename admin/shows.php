@@ -20,7 +20,7 @@ if ($action === 'delete') {
 if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $movieId       = (int)$_POST['movie_id'];
     $roomId        = (int)$_POST['room_id'];
-    $startDate     = trim($_POST['start_date']      ?? '');
+    $startDate = sprintf('%s-%s-%s', $_POST['start_year']??date('Y'), $_POST['start_month']??date('m'), $_POST['start_day']??date('d'));
     $startTimeOnly = trim($_POST['start_time_only'] ?? '');
     $startTime     = ($startDate && $startTimeOnly) ? $startDate . ' ' . $startTimeOnly . ':00' : '';
 
@@ -145,12 +145,45 @@ renderHead('Quản lý suất chiếu');
           <div class="form-group">
             <label>Thời gian bắt đầu *</label>
             <div style="display:flex;gap:8px">
-              <input class="form-control" type="date" name="start_date" required
-                     style="flex:1;color-scheme:dark"
-                     value="<?= $editing ? date('Y-m-d', strtotime($editing['start_time'])) : date('Y-m-d') ?>">
-              <input class="form-control" type="time" name="start_time_only" required
-                     style="width:110px;color-scheme:dark"
-                     value="<?= $editing ? date('H:i', strtotime($editing['start_time'])) : '10:00' ?>">
+              <?php
+                $selDate = $editing ? date('Y-m-d', strtotime($editing['start_time'])) : date('Y-m-d');
+                [$selY, $selM, $selD] = explode('-', $selDate);
+              ?>
+              <div style="display:flex;gap:6px;flex:1">
+                <select class="form-control" name="start_day" required style="width:72px">
+                  <?php for ($d=1;$d<=31;$d++): ?>
+                  <option value="<?= sprintf('%02d',$d) ?>" <?= (int)$selD===$d?'selected':'' ?>><?= sprintf('%02d',$d) ?></option>
+                  <?php endfor; ?>
+                </select>
+                <select class="form-control" name="start_month" required style="width:110px">
+                  <?php
+                  $months=['01'=>'Tháng 1','02'=>'Tháng 2','03'=>'Tháng 3','04'=>'Tháng 4',
+                           '05'=>'Tháng 5','06'=>'Tháng 6','07'=>'Tháng 7','08'=>'Tháng 8',
+                           '09'=>'Tháng 9','10'=>'Tháng 10','11'=>'Tháng 11','12'=>'Tháng 12'];
+                  foreach ($months as $mv=>$ml): ?>
+                  <option value="<?= $mv ?>" <?= $selM===$mv?'selected':'' ?>><?= $ml ?></option>
+                  <?php endforeach; ?>
+                </select>
+                <select class="form-control" name="start_year" required style="width:90px">
+                  <?php for ($y=date('Y');$y<=date('Y')+2;$y++): ?>
+                  <option value="<?= $y ?>" <?= (int)$selY===$y?'selected':'' ?>><?= $y ?></option>
+                  <?php endfor; ?>
+                </select>
+              </div>
+              <select class="form-control" name="start_time_only" required style="width:130px">
+                <?php
+                $selTime = $editing ? date('H:i', strtotime($editing['start_time'])) : '10:00';
+                $slots = [];
+                for ($h = 7; $h <= 23; $h++) {
+                  foreach ([0, 15, 30, 45] as $m) {
+                    $slots[] = sprintf('%02d:%02d', $h, $m);
+                  }
+                }
+                foreach ($slots as $slot):
+                ?>
+                <option value="<?= $slot ?>" <?= $selTime === $slot ? 'selected' : '' ?>><?= $slot ?></option>
+                <?php endforeach; ?>
+              </select>
             </div>
           </div>
         </div>

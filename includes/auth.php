@@ -93,9 +93,9 @@ function loginUser(string $email, string $password): array {
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
 
-    if (!$user) return ['ok' => false, 'msg' => 'Email hoặc mật khẩu không đúng.'];
+    if (!$user) return ['ok' => false, 'msg' => 'Email chưa được đăng ký. <a href="' . APP_URL . '/register.php" style="color:#e50914">Đăng ký ngay</a>'];
     if (!password_verify($password, $user['password_hash'])) {
-        return ['ok' => false, 'msg' => 'Email hoặc mật khẩu không đúng.'];
+        return ['ok' => false, 'msg' => 'Mật khẩu không đúng.'];
     }
     if (!$user['email_verified']) {
         // Phân biệt: chưa xác thực email vs bị admin khóa

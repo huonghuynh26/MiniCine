@@ -46,7 +46,7 @@ renderHead('Trang chủ');
         <div class="banner-badge" style="background:rgba(0,150,255,.25);color:#66ccff">🎬 ĐANG CHIẾU</div>
         <h2 class="banner-title">Phim Hot <span style="color:#66ccff">Tháng Này</span></h2>
         <p class="banner-desc">Hàng chục bộ phim bom tấn đang chiếu tại MiniCine</p>
-        <a href="<?= APP_URL ?>/index.php?tab=showing" class="banner-btn" style="background:#0066cc">Xem phim →</a>
+        <a href="<?= APP_URL ?>/booking.php" class="banner-btn" style="background:#0066cc">Xem phim →</a>
       </div><div class="banner-deco">🎬</div>
     </div>
     <div class="banner-slide" style="background:linear-gradient(135deg,#1a1200 0%,#5a3d00 50%,#f5a623 100%)">
@@ -54,7 +54,7 @@ renderHead('Trang chủ');
         <div class="banner-badge" style="background:rgba(245,166,35,.25);color:#f5c518">🛍️ STAR SHOP</div>
         <h2 class="banner-title">Combo <span style="color:#f5c518">Bắp + Nước</span></h2>
         <p class="banner-desc">Bình Minion limited edition, bắp rang bơ thơm lừng</p>
-        <a href="#" class="banner-btn" style="background:#d4890a">Khám phá →</a>
+        <a href="<?= APP_URL ?>/star_shop.php" class="banner-btn" style="background:#d4890a">Khám phá →</a>
       </div><div class="banner-deco">🍿</div>
     </div>
     <div class="banner-slide" style="background:linear-gradient(135deg,#0a1a0a 0%,#0d4a1a 50%,#1db954 100%)">

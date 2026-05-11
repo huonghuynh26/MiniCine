@@ -1,5 +1,4 @@
 <?php
-// tài khoản quản trị viên admin@minicine.vn / Admin@123
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/layout.php';
@@ -11,12 +10,17 @@ $err = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = loginUser(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
     if ($result['ok']) {
-        $redirect = $_GET['redirect'] ?? ($result['role'] === 'admin' ? APP_URL . '/admin/index.php' : APP_URL . '/index.php');
+        $redirect = $_GET['redirect'] ?? ($result['role'] === 'admin'
+            ? APP_URL . '/admin/index.php'
+            : APP_URL . '/index.php');
         header('Location: ' . $redirect);
         exit;
     }
-    $err = $result['msg'];
+    $err = $result['msg']; // giữ nguyên HTML (có thể chứa link)
 }
+
+// Hiện thông báo nếu bị redirect do bị khóa
+$locked = $_GET['locked'] ?? '';
 
 renderHead('Đăng nhập');
 ?>
@@ -26,8 +30,13 @@ renderHead('Đăng nhập');
   <h1>Đăng nhập</h1>
   <p class="sub">Chào mừng trở lại với MiniCine 🎬</p>
 
+  <?php if ($locked): ?>
+  <div class="alert alert-error">🔒 Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.</div>
+  <?php endif; ?>
+
   <?php if ($err): ?>
-  <div class="alert alert-error"><?= htmlspecialchars($err) ?></div>
+  <!-- Dùng $err trực tiếp (không escape) để render link HTML -->
+  <div class="alert alert-error"><?= $err ?></div>
   <?php endif; ?>
 
   <form method="post">
