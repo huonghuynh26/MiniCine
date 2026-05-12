@@ -637,7 +637,17 @@ function renderSeats(seats){
 }
 function showMsg(text,type){const el=document.getElementById('suggest-msg');el.innerHTML=`<div class="alert alert-${type}" style="margin-bottom:10px">${text}</div>`;setTimeout(()=>el.innerHTML='',4000);}
 async function toggleSeat(s){
-  if(selected[s.id]){delete selected[s.id];renderOptimistic();try{await fetch(`${BASE_URL}/api/release.php`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({show_id:SHOW_ID,seat_ids:[s.id]})});}catch(e){}await loadSeats();return;}
+  if(selected[s.id]){
+    delete selected[s.id];
+    renderOptimistic();
+    // Nếu ko còn ghế nào thì dừng countdown
+    if(Object.keys(selected).length===0){
+      clearInterval(holdTimer);holdTimer=null;holdSeconds=0;
+      document.getElementById('countdown-wrap').style.display='none';
+    }
+    try{await fetch(`${BASE_URL}/api/release.php`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({show_id:SHOW_ID,seat_ids:[s.id]})});}catch(e){}
+    await loadSeats();return;
+  }
   selected[s.id]=s;renderOptimistic();
   const res=await fetch(`${BASE_URL}/api/hold.php`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({show_id:SHOW_ID,seat_ids:[s.id]})});
   const data=await res.json();
@@ -645,7 +655,20 @@ async function toggleSeat(s){
   await loadSeats();
 }
 function renderOptimistic(){document.querySelectorAll('.seat').forEach(el=>{const t=el.getAttribute('title');const isSel=Object.values(selected).some(s=>{const l=s.type==='couple'?`${s.row}${s.number*2-1}-${s.row}${s.number*2}`:`${s.row}${s.number}`;return l===t;});if(isSel){el.className=el.className.replace(/\bavailable\b|\bvip-seat\b|\bcouple-seat\b|\bheld\b/g,'').trim();if(!el.className.includes('selected'))el.className+=' selected';}});updateSummary();}
-async function clearSelection(){const ids=Object.keys(selected).map(Number);selected={};renderOptimistic();if(ids.length){try{await fetch(`${BASE_URL}/api/release.php`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({show_id:SHOW_ID,seat_ids:ids})});}catch(e){}}await loadSeats();document.getElementById('countdown-wrap').style.display='none';clearInterval(holdTimer);}
+async function clearSelection(){
+  const ids=Object.keys(selected).map(Number);
+  selected={};
+  // Dừng đếm ngược ngay lập tức
+  clearInterval(holdTimer);
+  holdTimer=null;
+  holdSeconds=0;
+  document.getElementById('countdown-wrap').style.display='none';
+  renderOptimistic();
+  if(ids.length){
+    try{await fetch(`${BASE_URL}/api/release.php`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({show_id:SHOW_ID,seat_ids:ids})});}catch(e){}
+  }
+  await loadSeats();
+}
 function updateSummary(){
   const items=Object.values(selected);document.getElementById('points-section').style.display=items.length?'block':'none';
   if(!items.length){document.getElementById('selected-list').innerHTML='<p style="color:#bbb;font-size:12px;text-align:center;padding:6px 0">Chưa chọn ghế nào</p>';document.getElementById('total-price').textContent='0 đ';document.getElementById('pay-btn').disabled=true;document.getElementById('points-row').style.display='none';pointsUsed=0;if(document.getElementById('points-input'))document.getElementById('points-input').value=0;return;}
